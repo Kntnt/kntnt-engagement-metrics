@@ -95,7 +95,7 @@ Implementation note: use a single `setTimeout` that is reset on each scroll even
 
 ### 5. Measurement tick
 
-A `requestAnimationFrame`-based loop runs every `tickInterval` milliseconds (throttled by checking elapsed time against `tickInterval`):
+A `requestAnimationFrame`-based loop runs every `tickInterval` milliseconds (throttled by checking elapsed time against `tickInterval`). The loop is **sequential**: only one element — the topmost unfinished visible element — advances per tick. This models a human reader who finishes one paragraph before moving to the next.
 
 ```
 function tick(timestamp):
@@ -105,24 +105,25 @@ function tick(timestamp):
     if NOT isPageVisible: return
     if isScrolling: return
 
-    for each element in trackedElements:
+    elapsed = tickInterval / 1000  // seconds
+
+    // Find the topmost unfinished element that is visible
+    for each element in trackedElements (in DOM order):
         if element.isFullyRead: continue
         if element.visibilityRatio == 0: continue
 
-        // Advance the timer proportionally to visibility and elapsed time
-        elapsed = tickInterval / 1000  // seconds
-        element.timer.advance(elapsed * element.visibilityRatio)
-
-        if element.timer.remaining <= 0:
-            element.isFullyRead = true
+        // Cap reading at the visible boundary and advance at full speed
+        element.timer.targetRatio = element.visibilityRatio
+        element.timer.advance(elapsed)
+        break  // only one element per tick
 
     metrics = computeMetrics()
     for each listener in listeners:
-        try: listener.update(metrics)  // Each call is wrapped in try-catch so one
-        catch: continue                // listener's error cannot break others
+        try: listener.update(metrics)
+        catch: continue
 
     if metrics.readingRatio == 1.0 AND metrics.scanningRatio == 1.0:
-        stop()  // All content read and scanned — done
+        stop()
     else:
         requestAnimationFrame(tick)
 ```
@@ -179,12 +180,18 @@ interface EngagementMetrics {
 class Timer {
     initialDuration: number  // seconds (mutable via recalibrate)
     remaining: number        // seconds
+    targetRatio: number      // 0–1, default 1.0 — the progress cap for advance()
 
     constructor(durationSeconds: number)
 
-    /** Advance the timer by the given number of seconds. */
+    /**
+     * Advance the timer by the given number of seconds.
+     * Remaining will not drop below `initialDuration * (1 - targetRatio)`,
+     * so reading cannot progress beyond the visible boundary.
+     */
     advance(seconds: number): void {
-        this.remaining = Math.max(0, this.remaining - seconds)
+        const floor = this.initialDuration * (1 - this.targetRatio)
+        this.remaining = Math.max(floor, this.remaining - seconds)
     }
 
     /**
@@ -205,8 +212,24 @@ class Timer {
         if (this.initialDuration === 0) return 1
         return 1 - this.remaining / this.initialDuration
     }
+
+    /** True when progress has reached or exceeded the current targetRatio. */
+    get isAtTarget(): boolean {
+        if (this.initialDuration === 0) return true
+        return this.progress >= this.targetRatio
+    }
 }
 ```
+
+## Sequential reading model
+
+The algorithm models a human reader who reads one paragraph at a time, top to bottom:
+
+1. **One element at a time**: on each tick, only the topmost unfinished element that is currently visible in the viewport advances its timer.
+2. **Target-ratio cap**: the timer's `targetRatio` is set to the element's `visibilityRatio`. This means reading progresses up to the visible boundary of the element, then stops — the reader cannot read what is not visible.
+3. **Skip ahead**: if the topmost unfinished element has `visibilityRatio === 0` (scrolled out of view), the algorithm skips to the next visible unfinished element. This models a reader who scrolls past content.
+4. **Scroll-back resumes**: if the user scrolls back up to a partially-read element, reading resumes from where it left off. Progress is never lost.
+5. **Full-speed advancement**: within the target cap, the timer advances at 1:1 real time (not scaled by visibility). The cap — not the speed — controls how far reading can progress.
 
 ## Runtime recalibration
 
@@ -219,7 +242,7 @@ The reading speed can be changed at runtime via `measurer.setReadingSpeed(charsP
 3. **Dynamically added content** — NOT supported in v0.1. A future version may add a `MutationObserver` to detect new elements.
 4. **Iframes** — the library measures only the document it is loaded in. Cross-frame measurement is out of scope.
 5. **Zero-height elements** — filtered out during initialization (elements with `offsetHeight === 0` are skipped).
-6. **Very long elements** — the IntersectionObserver thresholds handle partial visibility. A 2000px-tall paragraph at 25% visibility advances at 0.25× speed.
+6. **Very long elements** — the IntersectionObserver thresholds handle partial visibility. A 2000px-tall paragraph at 25% visibility will have its timer capped at 25% progress until more of the element scrolls into view.
 7. **Rapid tab switching** — the page visibility handler pauses and resumes cleanly. No time "leaks" during hidden periods.
 
 ## Performance considerations
