@@ -251,14 +251,20 @@ export class Measurer {
     this.#animationFrameId = requestAnimationFrame((t) => this.#tick(t))
   }
 
-  /** Advance element timers if the page is visible and not scrolling. */
+  /** Advance the topmost unfinished visible element's timer. */
   #advanceTimers(): void {
     if (!this.#isPageVisible || this.#isScrolling) return
     const elapsed = this.#config.tickInterval / 1000
 
+    // Find the topmost unfinished element that is visible
     for (const element of this.#elements) {
-      if (element.isFullyRead || element.visibilityRatio === 0) continue
-      element.timer.advance(elapsed * element.visibilityRatio)
+      if (element.isFullyRead) continue
+      if (element.visibilityRatio === 0) continue
+
+      // Cap reading at the visible boundary and advance at full speed
+      element.timer.targetRatio = element.visibilityRatio
+      element.timer.advance(elapsed)
+      return // only one element per tick
     }
   }
 

@@ -165,31 +165,25 @@ describe('Measurer', () => {
     measurer.stop()
   })
 
-  it('advances timer at half speed for 50% visibility', () => {
-    setupDOM(['Test content here'])
+  it('caps reading progress at visibility ratio', () => {
+    // 863 chars at 863 chars/min = 60s duration
+    const longText = 'x'.repeat(863)
+    setupDOM([longText])
     const measurer = new Measurer({ tickInterval: 200 })
     measurer.start()
 
     const p = document.querySelector('p')!
+    mockObserverInstance!.trigger(p, 0.5, true)
 
-    // Run at 100% visibility for one tick
-    mockObserverInstance!.trigger(p, 1.0, true)
-    jest.advanceTimersByTime(250)
-    const fullReading = measurer.getMetrics().readingTime
+    // Advance way more than enough time to read 50%
+    jest.advanceTimersByTime(40000)
+    const metrics = measurer.getMetrics()
+
+    // Reading should be capped at ~50%, not 100%
+    expect(metrics.readingRatio).toBeCloseTo(0.5, 1)
+    expect(metrics.readingRatio).toBeLessThan(0.6)
+
     measurer.stop()
-
-    // Fresh setup at 50% visibility
-    document.body.innerHTML = ''
-    setupDOM(['Test content here'])
-    const measurer2 = new Measurer({ tickInterval: 200 })
-    measurer2.start()
-    const p2 = document.querySelector('p')!
-    mockObserverInstance!.trigger(p2, 0.5, true)
-    jest.advanceTimersByTime(250)
-    const halfReading = measurer2.getMetrics().readingTime
-
-    expect(halfReading).toBeCloseTo(fullReading / 2, 2)
-    measurer2.stop()
   })
 
   it('pauses timers when page is hidden', () => {
@@ -482,6 +476,126 @@ describe('Measurer', () => {
       measurer.setReadingSpeed(Number.NaN)
 
       expect(measurer.getMetrics().contentTime).toBe(contentTimeBefore)
+      measurer.stop()
+    })
+  })
+
+  describe('sequential reading', () => {
+    it('only advances the topmost unfinished visible element', () => {
+      setupDOM(['First paragraph', 'Second paragraph'])
+      const measurer = new Measurer({ tickInterval: 200 })
+      measurer.start()
+
+      const paragraphs = document.querySelectorAll('p')
+      mockObserverInstance!.trigger(paragraphs[0]!, 1.0, true)
+      mockObserverInstance!.trigger(paragraphs[1]!, 1.0, true)
+
+      jest.advanceTimersByTime(250)
+
+      const elements = measurer.getElements()
+      expect(elements[0]!.readingProgress).toBeGreaterThan(0)
+      expect(elements[1]!.readingProgress).toBe(0)
+
+      measurer.stop()
+    })
+
+    it('skips non-visible element and advances next visible one', () => {
+      setupDOM(['Not visible', 'Visible paragraph'])
+      const measurer = new Measurer({ tickInterval: 200 })
+      measurer.start()
+
+      const paragraphs = document.querySelectorAll('p')
+      mockObserverInstance!.trigger(paragraphs[0]!, 0, false)
+      mockObserverInstance!.trigger(paragraphs[1]!, 1.0, true)
+
+      jest.advanceTimersByTime(250)
+
+      const elements = measurer.getElements()
+      expect(elements[0]!.readingProgress).toBe(0)
+      expect(elements[1]!.readingProgress).toBeGreaterThan(0)
+
+      measurer.stop()
+    })
+
+    it('caps reading at visibility ratio (target cap)', () => {
+      const longText = 'x'.repeat(863) // 863 chars = 60 seconds at default speed
+      setupDOM([longText])
+      const measurer = new Measurer({ tickInterval: 200 })
+      measurer.start()
+
+      const p = document.querySelector('p')!
+      mockObserverInstance!.trigger(p, 0.25, true)
+
+      jest.advanceTimersByTime(20000)
+
+      const elements = measurer.getElements()
+      expect(elements[0]!.readingProgress).toBeCloseTo(0.25, 1)
+
+      measurer.stop()
+    })
+
+    it('raising visibility allows further reading', () => {
+      const longText = 'x'.repeat(863) // 60 seconds at default speed
+      setupDOM([longText])
+      const measurer = new Measurer({ tickInterval: 200 })
+      measurer.start()
+
+      const p = document.querySelector('p')!
+      mockObserverInstance!.trigger(p, 0.25, true)
+      jest.advanceTimersByTime(20000)
+
+      mockObserverInstance!.trigger(p, 0.5, true)
+      jest.advanceTimersByTime(20000)
+
+      const elements = measurer.getElements()
+      expect(elements[0]!.readingProgress).toBeCloseTo(0.5, 1)
+
+      measurer.stop()
+    })
+
+    it('moves to next element when current is fully read', () => {
+      // 2 chars → duration ≈ 0.139s, one tick (0.2s) is enough
+      setupDOM(['Hi', 'By'])
+      const measurer = new Measurer({ tickInterval: 200 })
+      measurer.start()
+
+      const paragraphs = document.querySelectorAll('p')
+      mockObserverInstance!.trigger(paragraphs[0]!, 1.0, true)
+      mockObserverInstance!.trigger(paragraphs[1]!, 1.0, true)
+
+      jest.advanceTimersByTime(600)
+
+      const elements = measurer.getElements()
+      expect(elements[0]!.isFullyRead).toBe(true)
+      expect(elements[1]!.readingProgress).toBeGreaterThan(0)
+
+      measurer.stop()
+    })
+
+    it('resumes reading on scroll-back to partially-read element', () => {
+      const longText = 'x'.repeat(863) // 60 seconds at default speed
+      setupDOM([longText, 'Second'])
+      const measurer = new Measurer({ tickInterval: 200 })
+      measurer.start()
+
+      const paragraphs = document.querySelectorAll('p')
+
+      mockObserverInstance!.trigger(paragraphs[0]!, 0.25, true)
+      jest.advanceTimersByTime(20000)
+      const progressAt25 = measurer.getElements()[0]!.readingProgress
+
+      mockObserverInstance!.trigger(paragraphs[0]!, 0, false)
+      mockObserverInstance!.trigger(paragraphs[1]!, 1.0, true)
+      jest.advanceTimersByTime(250)
+
+      expect(measurer.getElements()[0]!.readingProgress).toBeCloseTo(progressAt25, 2)
+
+      mockObserverInstance!.trigger(paragraphs[0]!, 0.5, true)
+      mockObserverInstance!.trigger(paragraphs[1]!, 0, false)
+      jest.advanceTimersByTime(20000)
+
+      expect(measurer.getElements()[0]!.readingProgress).toBeCloseTo(0.5, 1)
+
       measurer.stop()
     })
   })
