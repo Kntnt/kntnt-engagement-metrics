@@ -13,7 +13,8 @@ kntnt-engagement-metrics/
 ├── packages/
 │   ├── core/       → @kntnt/engagement-metrics (zero dependencies)
 │   ├── matomo/     → @kntnt/engagement-metrics-matomo
-│   └── gtag/       → @kntnt/engagement-metrics-gtag
+│   ├── gtag/       → @kntnt/engagement-metrics-gtag
+│   └── overlay/    → @kntnt/engagement-metrics-overlay
 ├── docs/        → Detailed specifications (READ THESE before coding)
 │   ├── architecture.md       → System architecture and design principles
 │   ├── algorithm.md          → Complete measurement algorithm specification

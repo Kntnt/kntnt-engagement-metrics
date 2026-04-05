@@ -2,7 +2,9 @@
 
 ## What is an add-on?
 
-An add-on is a separate npm package that consumes engagement metrics from the core library and sends them to an external analytics platform. Each add-on is a package within this monorepo under `packages/`.
+An add-on is a separate npm package that consumes engagement metrics from the core library and reports or visualizes them. Each add-on is a package within this monorepo under `packages/`.
+
+Most add-ons work with aggregate `EngagementMetrics` only. Add-ons that need per-element data (like the overlay add-on) can use `measurer.getElements()` to access individual `TrackedElement` instances and their reading state.
 
 ## Creating a new add-on
 

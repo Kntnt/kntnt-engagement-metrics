@@ -121,6 +121,24 @@ export class Measurer {
     return this.#computeMetrics()
   }
 
+  /** Expose tracked elements for visualization or diagnostic purposes. */
+  getElements(): ReadonlyArray<TrackedElement> {
+    return this.#elements
+  }
+
+  /**
+   * Change the reading speed and recalibrate all element timers.
+   * Preserves each element's current reading progress.
+   *
+   * @param charsPerMinute - New reading speed in characters per minute.
+   */
+  setReadingSpeed(charsPerMinute: number): void {
+    for (const element of this.#elements) {
+      const newDuration = element.charCount > 0 ? (element.charCount / charsPerMinute) * 60 : 0
+      element.timer.recalibrate(newDuration)
+    }
+  }
+
   #handleIntersection(entries: IntersectionObserverEntry[]): void {
     for (const entry of entries) {
       const element = this.#elements.find((el) => el.node === entry.target)

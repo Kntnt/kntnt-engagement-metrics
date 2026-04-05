@@ -388,4 +388,63 @@ describe('Measurer', () => {
     expect(metrics.contentLength).toBe('Kept'.length + 'Also kept'.length)
     measurer.stop()
   })
+
+  describe('getElements()', () => {
+    it('returns tracked elements matching selector', () => {
+      setupDOM(['First', 'Second'])
+      const measurer = new Measurer()
+      measurer.start()
+
+      const elements = measurer.getElements()
+      expect(elements.length).toBe(2)
+      expect(elements[0]?.charCount).toBe('First'.length)
+      expect(elements[1]?.charCount).toBe('Second'.length)
+
+      measurer.stop()
+    })
+
+    it('returns empty array before start()', () => {
+      setupDOM(['Not started'])
+      const measurer = new Measurer()
+
+      expect(measurer.getElements()).toEqual([])
+    })
+  })
+
+  describe('setReadingSpeed()', () => {
+    it('recalibrates all element timers', () => {
+      setupDOM(['Hello world'])
+      const measurer = new Measurer({ readingSpeed: 863 })
+      measurer.start()
+
+      const contentTimeBefore = measurer.getMetrics().contentTime
+      measurer.setReadingSpeed(863 * 2) // double the speed
+      const contentTimeAfter = measurer.getMetrics().contentTime
+
+      expect(contentTimeAfter).toBeCloseTo(contentTimeBefore / 2, 2)
+      measurer.stop()
+    })
+
+    it('preserves existing reading progress', () => {
+      setupDOM(['Some text here'])
+      const measurer = new Measurer({ tickInterval: 200 })
+      measurer.start()
+
+      // Make element visible and advance one tick
+      const p = document.querySelector('p')!
+      mockObserverInstance!.trigger(p, 1.0, true)
+      jest.advanceTimersByTime(250)
+
+      const progressBefore = measurer.getElements()[0]?.readingProgress ?? 0
+      expect(progressBefore).toBeGreaterThan(0)
+
+      // Change reading speed
+      measurer.setReadingSpeed(500)
+
+      const progressAfter = measurer.getElements()[0]?.readingProgress ?? 0
+      expect(progressAfter).toBeCloseTo(progressBefore, 5)
+
+      measurer.stop()
+    })
+  })
 })

@@ -20,7 +20,8 @@ kntnt-engagement-metrics/
 ├── packages/
 │   ├── core/           → @kntnt/engagement-metrics
 │   ├── matomo/         → @kntnt/engagement-metrics-matomo
-│   └── gtag/           → @kntnt/engagement-metrics-gtag
+│   ├── gtag/           → @kntnt/engagement-metrics-gtag
+│   └── overlay/        → @kntnt/engagement-metrics-overlay
 ├── docs/               → Detailed technical documentation
 ├── CLAUDE.md           → Claude Code agent instructions
 ├── AGENTS.md           → Universal AI agent instructions
@@ -34,6 +35,7 @@ kntnt-engagement-metrics/
     ↑ peerDependency
 @kntnt/engagement-metrics-matomo    (peer: core)
 @kntnt/engagement-metrics-gtag      (peer: core)
+@kntnt/engagement-metrics-overlay   (peer: core)
 ```
 
 ## Tooling
@@ -91,6 +93,8 @@ Each add-on package follows the same pattern:
 2. Implement a listener class that translates metrics into analytics events.
 3. Export a `register(measurer, config)` function for easy setup.
 4. Provide an IIFE entry point that auto-registers with the global measurer.
+
+The **overlay** add-on is a special case: it uses `measurer.getElements()` to access per-element reading state, enabling real-time visualization of individual elements rather than only consuming aggregate metrics.
 
 ## Distribution models
 

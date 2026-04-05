@@ -31,6 +31,12 @@ class Measurer {
   /** Get the current metrics snapshot (without waiting for next tick). */
   getMetrics(): EngagementMetrics
 
+  /** Expose tracked elements for visualization or diagnostic purposes. */
+  getElements(): ReadonlyArray<TrackedElement>
+
+  /** Change the reading speed and recalibrate all timers, preserving progress. */
+  setReadingSpeed(charsPerMinute: number): void
+
   /** True if measurement is currently running. */
   readonly isActive: boolean
 }
@@ -175,5 +181,82 @@ interface GtagConfig {
 ```typescript
 window.KntntEngagementMetrics.gtag = {
   register: (config?) => void   // Auto-registers with the global measurer
+}
+```
+
+## Visual overlay add-on: @kntnt/engagement-metrics-overlay
+
+### Registration function
+
+```typescript
+function registerOverlay(measurer: Measurer, config?: Partial<OverlayConfig>): EngagementOverlay
+```
+
+Returns the `EngagementOverlay` instance for programmatic control (unlike the analytics add-ons which return `void`).
+
+### Configuration type
+
+```typescript
+interface OverlayConfig {
+  /** Whether the overlay is initially enabled. Default: true */
+  readonly enabled: boolean
+
+  /** Whether to show the HUD metrics panel. Default: true */
+  readonly showHud: boolean
+
+  /** Whether to show per-element color coding. Default: true */
+  readonly showElements: boolean
+
+  /** HUD panel position on screen. Default: 'bottom-right' */
+  readonly hudPosition: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+
+  /** Keyboard code for the Ctrl+Shift toggle shortcut. Default: 'KeyD' */
+  readonly toggleKey: string
+}
+```
+
+### EngagementOverlay class
+
+```typescript
+class EngagementOverlay implements MetricsListener {
+  /** Called on every measurement tick with a fresh metrics snapshot. */
+  update(metrics: EngagementMetrics): void
+
+  /** Toggle the overlay on or off. */
+  toggle(): void
+
+  /** Enable the overlay, creating the HUD and element visualizer. */
+  enable(): void
+
+  /** Disable the overlay, restoring element styles and hiding the HUD. */
+  disable(): void
+
+  /** Fully tear down the overlay: remove listener, keyboard handler, and DOM elements. */
+  destroy(): void
+}
+```
+
+### Element color coding
+
+| State | Condition | Visual indicator |
+|-------|-----------|-----------------|
+| Unseen | Not yet scrolled into view | Blue outline |
+| Running | Visible and being read | Gold outline + yellow gradient showing reading progress |
+| Paused | Previously seen but no longer visible | Red outline |
+| Finished | Fully read | Green outline + light green background |
+
+### HUD panel
+
+The HUD panel displays live metrics (reading %, scanning %, element counts, status) and includes an interactive reading speed control:
+
+- **Range slider** (100–3000 cpm) and **numeric input** for reading speed
+- Changes take effect immediately via `measurer.setReadingSpeed()`
+- Toggle the overlay with `Ctrl+Shift+D` (configurable)
+
+### IIFE global
+
+```typescript
+window.KntntEngagementMetrics.overlay = {
+  register: (config?) => EngagementOverlay   // Auto-registers with the global measurer
 }
 ```

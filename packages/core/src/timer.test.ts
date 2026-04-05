@@ -75,4 +75,41 @@ describe('Timer', () => {
     expect(timer.remaining).toBe(4)
     expect(timer.progress).toBeCloseTo(0.6)
   })
+
+  describe('recalibrate()', () => {
+    it('preserves progress proportionally with new duration', () => {
+      const timer = new Timer(10)
+      timer.advance(6) // 60% progress
+      timer.recalibrate(20)
+      expect(timer.initialDuration).toBe(20)
+      expect(timer.progress).toBeCloseTo(0.6)
+      expect(timer.remaining).toBeCloseTo(8) // 20 * 0.4
+    })
+
+    it('sets full new duration on zero-progress timer', () => {
+      const timer = new Timer(10)
+      timer.recalibrate(20)
+      expect(timer.initialDuration).toBe(20)
+      expect(timer.remaining).toBe(20)
+      expect(timer.progress).toBe(0)
+    })
+
+    it('keeps remaining at 0 on a complete timer', () => {
+      const timer = new Timer(10)
+      timer.advance(10)
+      timer.recalibrate(20)
+      expect(timer.initialDuration).toBe(20)
+      expect(timer.remaining).toBe(0)
+      expect(timer.isComplete).toBe(true)
+    })
+
+    it('with zero duration results in immediate completion', () => {
+      const timer = new Timer(10)
+      timer.advance(5)
+      timer.recalibrate(0)
+      expect(timer.initialDuration).toBe(0)
+      expect(timer.isComplete).toBe(true)
+      expect(timer.progress).toBe(1)
+    })
+  })
 })

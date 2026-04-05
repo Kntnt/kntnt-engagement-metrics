@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overlay Test Page</title>
+  <style>
+    body { font-family: Georgia, serif; max-width: 720px; margin: 0 auto; padding: 2rem; line-height: 1.7; }
+    p { margin-bottom: 4rem; }
+  </style>
+</head>
+<body>
+
+<p>Innan du investerar i ett passersystem finns grundläggande frågor att besvara.</p>
+
+<p>Den första frågan handlar om att kartlägga samtliga ingångar och passagepunkter som behöver skyddas. Det räcker inte att räkna antal dörrar – du måste identifiera varje väg in.</p>
+
+<p>Antalet användare avgör licensmodell.</p>
+
+<p>Passersystem kräver el och nätverksuppkoppling. Du behöver inventera vilken infrastruktur som redan finns installerad – är svagström framdragen till dörrarna?</p>
+
+<script src="/kntnt-engagement-metrics.min.js"></script>
+<script src="/kntnt-engagement-metrics-overlay.min.js"></script>
+<script>
+  const measurer = KntntEngagementMetrics.start()
+  KntntEngagementMetrics.measurer = measurer
+  KntntEngagementMetrics.overlay.register()
+</script>
+
+</body>
+</html>

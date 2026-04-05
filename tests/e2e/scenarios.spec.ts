@@ -60,6 +60,83 @@ async function getParagraphInfo(
   }, speed)
 }
 
+test.describe('Overlay scenario', () => {
+  test('Overlay shows visual indicators and responds to interaction', async ({ page }) => {
+    // Load the overlay test page
+    await page.goto('/overlay')
+    await page.waitForFunction(() => {
+      const ns = (window as unknown as Record<string, unknown>).KntntEngagementMetrics as
+        | { measurer?: { isActive: boolean } }
+        | undefined
+      return ns?.measurer?.isActive === true
+    })
+
+    // HUD panel should be visible (it's a div with data attribute)
+    const hudHost = page.locator('[data-kntnt-overlay="hud"]')
+    await expect(hudHost).toBeVisible()
+
+    // Wait for at least one measurement tick to fire (200ms default)
+    await page.waitForTimeout(500)
+
+    // The first paragraph should be visible and being read (gold outline)
+    const firstP = page.locator('p').first()
+    const runningOutline = await firstP.evaluate((el) => el.style.outline)
+    expect(runningOutline).toContain('gold')
+
+    // Wait long enough for the first paragraph to be fully read
+    // First paragraph: ~55 chars at 863 cpm → ~3.8s, but partial visibility slows it down
+    await page.waitForTimeout(8000)
+
+    // The element should now have a green outline (finished)
+    const finishedOutline = await firstP.evaluate((el) => el.style.outline)
+    expect(finishedOutline).toContain('limegreen')
+
+    // Change reading speed via the measurer and verify contentTime changes
+    const contentTimeBefore = await page.evaluate(() => {
+      const ns = (window as unknown as Record<string, unknown>).KntntEngagementMetrics as {
+        measurer: { getMetrics(): { contentTime: number }; setReadingSpeed(s: number): void }
+      }
+      return ns.measurer.getMetrics().contentTime
+    })
+
+    await page.evaluate(() => {
+      const ns = (window as unknown as Record<string, unknown>).KntntEngagementMetrics as {
+        measurer: { setReadingSpeed(s: number): void }
+      }
+      ns.measurer.setReadingSpeed(863 * 2) // double the speed
+    })
+
+    const contentTimeAfter = await page.evaluate(() => {
+      const ns = (window as unknown as Record<string, unknown>).KntntEngagementMetrics as {
+        measurer: { getMetrics(): { contentTime: number } }
+      }
+      return ns.measurer.getMetrics().contentTime
+    })
+
+    // Content time should be roughly halved (first paragraph already done, so check remaining)
+    expect(contentTimeAfter).toBeLessThan(contentTimeBefore)
+
+    // Toggle overlay off by dispatching keyboard shortcut
+    const hudVisibleBefore = await hudHost.isVisible()
+    expect(hudVisibleBefore).toBe(true)
+
+    await page.evaluate(() => {
+      const event = new KeyboardEvent('keydown', {
+        code: 'KeyD',
+        ctrlKey: true,
+        shiftKey: true,
+        bubbles: true,
+      })
+      document.dispatchEvent(event)
+    })
+    await page.waitForTimeout(500)
+
+    // Verify the HUD was removed from DOM (not just hidden)
+    const hudCount = await page.locator('[data-kntnt-overlay="hud"]').count()
+    expect(hudCount).toBe(0)
+  })
+})
+
 test.describe('Engagement metrics scenarios', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')

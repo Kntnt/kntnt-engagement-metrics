@@ -173,14 +173,24 @@ interface EngagementMetrics {
 
 ```typescript
 class Timer {
-    readonly initialDuration: number  // seconds
-    remaining: number                 // seconds
+    initialDuration: number  // seconds (mutable via recalibrate)
+    remaining: number        // seconds
 
     constructor(durationSeconds: number)
 
     /** Advance the timer by the given number of seconds. */
     advance(seconds: number): void {
         this.remaining = Math.max(0, this.remaining - seconds)
+    }
+
+    /**
+     * Recalibrate the timer with a new duration, preserving current progress.
+     * If progress is 60% and new duration is 10s, remaining becomes 4s.
+     */
+    recalibrate(newDurationSeconds: number): void {
+        const currentProgress = this.progress
+        this.initialDuration = Math.max(0, newDurationSeconds)
+        this.remaining = this.initialDuration * (1 - currentProgress)
     }
 
     get isComplete(): boolean {
@@ -193,6 +203,10 @@ class Timer {
     }
 }
 ```
+
+## Runtime recalibration
+
+The reading speed can be changed at runtime via `measurer.setReadingSpeed(charsPerMinute)`. This recalibrates all element timers by computing a new `initialDuration` for each element (`charCount / newSpeed * 60`) and calling `timer.recalibrate()`, which preserves the current reading progress. Elements that have already been fully read remain complete. This enables real-time experimentation with different reading speeds using the overlay add-on.
 
 ## Edge cases
 

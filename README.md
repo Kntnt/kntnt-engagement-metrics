@@ -26,6 +26,7 @@ From these observations, it produces metrics like *reading ratio* (what fraction
 | [`@kntnt/engagement-metrics`](packages/core) | Core measurement library (zero dependencies) |
 | [`@kntnt/engagement-metrics-matomo`](packages/matomo) | Matomo Analytics add-on |
 | [`@kntnt/engagement-metrics-gtag`](packages/gtag) | Google Analytics 4 (gtag.js) add-on |
+| [`@kntnt/engagement-metrics-overlay`](packages/overlay) | Real-time visual overlay showing measurement in action |
 
 ## Quick start
 
@@ -70,6 +71,7 @@ The packages are not yet published to npm or a CDN. To use them, you build the f
    - `packages/core/dist/kntnt-engagement-metrics.min.js`
    - `packages/matomo/dist/kntnt-engagement-metrics-matomo.min.js` (if using Matomo)
    - `packages/gtag/dist/kntnt-engagement-metrics-gtag.min.js` (if using Google Analytics)
+   - `packages/overlay/dist/kntnt-engagement-metrics-overlay.min.js` (if using the visual overlay)
 
 4. Add the scripts to your HTML:
 
@@ -83,6 +85,43 @@ The packages are not yet published to npm or a CDN. To use them, you build the f
   })
 </script>
 ```
+
+## Visual overlay
+
+Want to see the library in action? The overlay add-on shows measurement happening in real-time, directly on the page. It color-codes each tracked element by reading state and displays a live metrics panel with an interactive reading speed control — useful for understanding what is being measured and for experimenting with different reading speed settings.
+
+**What you see:**
+- **Blue** outline — element not yet scrolled into view
+- **Gold** outline with yellow gradient — element currently being read (gradient shows progress)
+- **Green** outline and background — element fully read
+- **Red** outline — element previously seen but no longer visible (paused)
+
+### Using a bundler (ESM)
+
+```js
+import { createMeasurer } from '@kntnt/engagement-metrics'
+import { registerOverlay } from '@kntnt/engagement-metrics-overlay'
+
+const measurer = createMeasurer({ selector: 'article p' })
+const overlay = registerOverlay(measurer)
+measurer.start()
+
+// Toggle with Ctrl+Shift+D, or programmatically:
+// overlay.toggle() / overlay.disable() / overlay.destroy()
+```
+
+### Using script tags (IIFE)
+
+```html
+<script src="/path/to/kntnt-engagement-metrics.min.js"></script>
+<script src="/path/to/kntnt-engagement-metrics-overlay.min.js"></script>
+<script>
+  KntntEngagementMetrics.start({ selector: 'article p' })
+  KntntEngagementMetrics.overlay.register()
+</script>
+```
+
+The HUD panel includes a reading speed slider (100–3000 characters per minute) that recalibrates all timers instantly, letting you find the right speed for your content.
 
 ## How it works
 
