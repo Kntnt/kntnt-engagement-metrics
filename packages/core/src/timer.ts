@@ -41,11 +41,14 @@ export class Timer {
   /**
    * Maximum progress (0–1) that advance() is allowed to reach.
    * Set by the measurer to match the element's visibility ratio.
+   *
+   * @internal Used by Measurer — add-ons and external code must not set this.
    */
   get targetRatio(): number {
     return this.#targetRatio
   }
 
+  /** @internal */
   set targetRatio(value: number) {
     if (!Number.isFinite(value) || value < 0 || value > 1) return
     this.#targetRatio = value
