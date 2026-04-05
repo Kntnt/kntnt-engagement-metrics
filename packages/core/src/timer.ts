@@ -1,10 +1,12 @@
 /**
  * A countdown timer that represents the estimated reading time for a content element.
- * Advances proportionally to the element's visibility ratio.
+ * Supports a target-ratio cap: advance() will not push progress beyond the
+ * configured targetRatio, modelling "read up to the visible boundary" semantics.
  */
 export class Timer {
   #initialDuration: number
   #remaining: number
+  #targetRatio: number
 
   /**
    * @param durationSeconds - Estimated reading time in seconds.
@@ -12,6 +14,7 @@ export class Timer {
   constructor(durationSeconds: number) {
     this.#initialDuration = Math.max(0, durationSeconds)
     this.#remaining = this.#initialDuration
+    this.#targetRatio = 1
   }
 
   /** The original estimated reading time in seconds. */
@@ -36,11 +39,31 @@ export class Timer {
   }
 
   /**
+   * Maximum progress (0–1) that advance() is allowed to reach.
+   * Set by the measurer to match the element's visibility ratio.
+   */
+  get targetRatio(): number {
+    return this.#targetRatio
+  }
+
+  set targetRatio(value: number) {
+    this.#targetRatio = value
+  }
+
+  /** Whether progress has reached or exceeded the current targetRatio. */
+  get isAtTarget(): boolean {
+    if (this.#initialDuration === 0) return true
+    return this.progress >= this.#targetRatio
+  }
+
+  /**
    * Advance the timer by the given number of seconds.
-   * The timer will not go below zero.
+   * The timer will not go below zero, and remaining will not drop
+   * below `initialDuration * (1 - targetRatio)`.
    */
   advance(seconds: number): void {
-    this.#remaining = Math.max(0, this.#remaining - seconds)
+    const floor = this.#initialDuration * (1 - this.#targetRatio)
+    this.#remaining = Math.max(floor, this.#remaining - seconds)
   }
 
   /**

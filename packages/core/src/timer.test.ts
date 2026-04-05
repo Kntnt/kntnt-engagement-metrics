@@ -112,4 +112,66 @@ describe('Timer', () => {
       expect(timer.progress).toBe(1)
     })
   })
+
+  describe('targetRatio', () => {
+    it('defaults to 1.0', () => {
+      const timer = new Timer(10)
+      expect(timer.targetRatio).toBe(1)
+    })
+
+    it('can be set to a value between 0 and 1', () => {
+      const timer = new Timer(10)
+      timer.targetRatio = 0.5
+      expect(timer.targetRatio).toBe(0.5)
+    })
+
+    it('advance() stops at targetRatio cap', () => {
+      const timer = new Timer(10)
+      timer.targetRatio = 0.3
+      timer.advance(10) // try to advance all the way
+      expect(timer.progress).toBeCloseTo(0.3)
+      expect(timer.remaining).toBeCloseTo(7)
+    })
+
+    it('raising targetRatio allows further advancement', () => {
+      const timer = new Timer(10)
+      timer.targetRatio = 0.5
+      timer.advance(10)
+      expect(timer.progress).toBeCloseTo(0.5)
+
+      timer.targetRatio = 0.8
+      timer.advance(10)
+      expect(timer.progress).toBeCloseTo(0.8)
+      expect(timer.remaining).toBeCloseTo(2)
+    })
+
+    it('isAtTarget returns true when progress reaches target', () => {
+      const timer = new Timer(10)
+      timer.targetRatio = 0.5
+      expect(timer.isAtTarget).toBe(false)
+      timer.advance(5)
+      expect(timer.isAtTarget).toBe(true)
+    })
+
+    it('isAtTarget is true for a zero-duration timer', () => {
+      const timer = new Timer(0)
+      expect(timer.isAtTarget).toBe(true)
+    })
+
+    it('targetRatio 1.0 allows full advancement (backward-compatible)', () => {
+      const timer = new Timer(10)
+      timer.advance(10)
+      expect(timer.isComplete).toBe(true)
+      expect(timer.isAtTarget).toBe(true)
+    })
+
+    it('recalibrate preserves targetRatio value', () => {
+      const timer = new Timer(10)
+      timer.targetRatio = 0.6
+      timer.advance(6) // at target
+      timer.recalibrate(20)
+      expect(timer.targetRatio).toBe(0.6)
+      expect(timer.progress).toBeCloseTo(0.6)
+    })
+  })
 })
