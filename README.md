@@ -79,10 +79,12 @@ The packages are not yet published to npm or a CDN. To use them, you build the f
 <script src="/path/to/kntnt-engagement-metrics.min.js"></script>
 <script src="/path/to/kntnt-engagement-metrics-gtag.min.js"></script>
 <script>
-  KntntEngagementMetrics.start({
+  const measurer = KntntEngagementMetrics.start({
     selector: 'article p',
     readingSpeed: 863,
   })
+  KntntEngagementMetrics.measurer = measurer
+  KntntEngagementMetrics.gtag.register()
 </script>
 ```
 
@@ -116,7 +118,8 @@ measurer.start()
 <script src="/path/to/kntnt-engagement-metrics.min.js"></script>
 <script src="/path/to/kntnt-engagement-metrics-overlay.min.js"></script>
 <script>
-  KntntEngagementMetrics.start({ selector: 'article p' })
+  const measurer = KntntEngagementMetrics.start({ selector: 'article p' })
+  KntntEngagementMetrics.measurer = measurer
   KntntEngagementMetrics.overlay.register()
 </script>
 ```
@@ -197,6 +200,7 @@ bun install
 ```bash
 bun run build        # Build all packages
 bun test             # Run tests
+bun run test:e2e     # Run end-to-end tests (Playwright)
 bun run lint         # Lint with Biome
 bun run typecheck    # Type-check with TypeScript
 ```

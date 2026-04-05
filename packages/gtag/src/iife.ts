@@ -11,9 +11,15 @@ const ns = (window as unknown as Record<string, unknown>).KntntEngagementMetrics
   | undefined
 
 if (ns) {
-  const config = ((window as unknown as Record<string, unknown>).kntntEngagementMetricsGtagConfig ??
-    {}) as Partial<GtagConfig>
-  ns.gtag = {
-    register: (cfg?: Partial<GtagConfig>) => registerGtag(ns.measurer as never, cfg ?? config),
+  if (ns.gtag) {
+    console.warn('[kntnt-engagement-metrics-gtag] Already loaded, skipping')
+  } else {
+    const config = ((window as unknown as Record<string, unknown>)
+      .kntntEngagementMetricsGtagConfig ?? {}) as Partial<GtagConfig>
+    ns.gtag = {
+      register: (cfg?: Partial<GtagConfig>) => registerGtag(ns.measurer as never, cfg ?? config),
+    }
   }
+} else {
+  console.warn('[kntnt-engagement-metrics-gtag] Core library not loaded')
 }

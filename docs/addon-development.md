@@ -129,3 +129,4 @@ If the analytics platform offers multiple integration methods (e.g., direct API,
 - Verify that events are sent at the correct thresholds.
 - Verify that events are not duplicated.
 - Verify auto-detection logic for different tracker configurations.
+- Verify that a broken tracker (one that throws from its push/call function) does not crash the listener — the try-catch in `#trackEvent` / `#sendEvent` should absorb the error.

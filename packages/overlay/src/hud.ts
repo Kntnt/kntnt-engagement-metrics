@@ -211,14 +211,20 @@ export class HudPanel {
     container.appendChild(speedRow)
     this.#shadow.appendChild(container)
 
-    // Wire up speed controls
+    // Wire up speed controls with bounds validation
+    const applySpeed = (value: number) => {
+      const clamped = Math.max(100, Math.min(3000, Math.round(value)))
+      if (!Number.isFinite(clamped)) return
+      this.#speedSlider.value = String(clamped)
+      this.#speedInput.value = String(clamped)
+      this.#measurer.setReadingSpeed(clamped)
+    }
+
     this.#speedSlider.addEventListener('input', () => {
-      this.#speedInput.value = this.#speedSlider.value
-      this.#measurer.setReadingSpeed(Number(this.#speedSlider.value))
+      applySpeed(Number(this.#speedSlider.value))
     })
     this.#speedInput.addEventListener('input', () => {
-      this.#speedSlider.value = this.#speedInput.value
-      this.#measurer.setReadingSpeed(Number(this.#speedInput.value))
+      applySpeed(Number(this.#speedInput.value))
     })
 
     // Append to document

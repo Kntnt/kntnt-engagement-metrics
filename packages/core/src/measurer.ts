@@ -21,7 +21,8 @@ const DEFAULTS: MeasurerConfig = {
 export class Measurer {
   readonly #config: MeasurerConfig
   readonly #listeners: Set<MetricsListener> = new Set()
-  readonly #elements: TrackedElement[] = []
+  #elements: TrackedElement[] = []
+  #elementMap: Map<Element, TrackedElement> = new Map()
 
   #observer: IntersectionObserver | null = null
   #animationFrameId: number | null = null
@@ -32,6 +33,7 @@ export class Measurer {
   #scrollTimeoutId: ReturnType<typeof setTimeout> | null = null
   #lastScrollY = 0
   #lastScrollTime = 0
+  #maxScanningDepth = 0
 
   constructor(config: Partial<MeasurerConfig> = {}) {
     this.#config = { ...DEFAULTS, ...config }
@@ -56,14 +58,20 @@ export class Measurer {
   start(): void {
     if (this.#isActive) return
 
-    // Discover content elements
-    const nodes = document.querySelectorAll(this.#config.selector)
-    const excludeSelector = this.#config.exclude
+    // Clear state from any previous run (length = 0 preserves the array reference
+    // so that code holding a reference from getElements() stays valid)
+    this.#elements.length = 0
+    this.#elementMap.clear()
+    this.#maxScanningDepth = 0
+
+    // Discover content elements (wrapped in try-catch for invalid selectors)
+    const nodes = this.#discoverNodes()
+    if (!nodes) return
+
     for (const node of nodes) {
-      if (excludeSelector && node.closest(excludeSelector)) continue
-      if ((node as HTMLElement).offsetHeight === 0) continue
-      if ((node.textContent ?? '').length === 0) continue
-      this.#elements.push(new TrackedElement(node, this.#config.readingSpeed))
+      const tracked = new TrackedElement(node, this.#config.readingSpeed)
+      this.#elements.push(tracked)
+      this.#elementMap.set(node, tracked)
     }
 
     if (this.#elements.length === 0) {
@@ -130,19 +138,69 @@ export class Measurer {
    * Change the reading speed and recalibrate all element timers.
    * Preserves each element's current reading progress.
    *
-   * @param charsPerMinute - New reading speed in characters per minute.
+   * @param charsPerMinute - New reading speed in characters per minute. Must be a positive number.
    */
   setReadingSpeed(charsPerMinute: number): void {
+    if (!Number.isFinite(charsPerMinute) || charsPerMinute <= 0) {
+      console.warn('[kntnt-engagement-metrics] Invalid reading speed:', charsPerMinute)
+      return
+    }
+
     for (const element of this.#elements) {
       const newDuration = element.charCount > 0 ? (element.charCount / charsPerMinute) * 60 : 0
       element.timer.recalibrate(newDuration)
     }
   }
 
+  /** Query the DOM for matching content elements, filtering by config. Returns null on error. */
+  #discoverNodes(): Element[] | null {
+    let nodes: NodeListOf<Element>
+    try {
+      nodes = document.querySelectorAll(this.#config.selector)
+    } catch {
+      console.warn('[kntnt-engagement-metrics] Invalid selector:', this.#config.selector)
+      return null
+    }
+
+    const { exclude } = this.#config
+    const result: Element[] = []
+
+    for (const node of nodes) {
+      if (exclude && this.#isExcluded(node, exclude)) continue
+      if (!('offsetHeight' in node) || (node as HTMLElement).offsetHeight === 0) continue
+      if ((node.textContent ?? '').length === 0) continue
+      result.push(node)
+    }
+
+    return result
+  }
+
+  /** Check whether a node matches the exclude selector or has a matching ancestor. */
+  #isExcluded(node: Element, exclude: string): boolean {
+    try {
+      return node.closest(exclude) !== null
+    } catch {
+      console.warn('[kntnt-engagement-metrics] Invalid exclude selector:', exclude)
+      return true // treat as excluded on invalid selector
+    }
+  }
+
   #handleIntersection(entries: IntersectionObserverEntry[]): void {
     for (const entry of entries) {
-      const element = this.#elements.find((el) => el.node === entry.target)
-      element?.updateVisibility(entry)
+      const element = this.#elementMap.get(entry.target)
+      if (!element) continue
+
+      const wasSeen = element.hasBeenSeen
+      element.updateVisibility(entry)
+
+      // Cache scanning depth when an element is first seen
+      if (!wasSeen && element.hasBeenSeen && element.node.isConnected) {
+        const rect = element.node.getBoundingClientRect()
+        const elementBottom = rect.bottom + window.scrollY
+        if (elementBottom > this.#maxScanningDepth) {
+          this.#maxScanningDepth = elementBottom
+        }
+      }
     }
   }
 
@@ -180,24 +238,10 @@ export class Measurer {
     if (!this.#isActive) return
 
     if (timestamp - this.#lastTickTime >= this.#config.tickInterval) {
-      if (this.#isPageVisible && !this.#isScrolling) {
-        const elapsed = this.#config.tickInterval / 1000
-
-        for (const element of this.#elements) {
-          if (element.isFullyRead) continue
-          if (element.visibilityRatio === 0) continue
-          element.timer.advance(elapsed * element.visibilityRatio)
-        }
-      }
-
-      const metrics = this.#computeMetrics()
-      for (const listener of this.#listeners) {
-        listener.update(metrics)
-      }
-
+      this.#advanceTimers()
+      const metrics = this.#notifyListeners()
       this.#lastTickTime = timestamp
 
-      // Stop if everything is read and scanned
       if (metrics.readingRatio >= 1 && metrics.scanningRatio >= 1) {
         this.stop()
         return
@@ -207,12 +251,35 @@ export class Measurer {
     this.#animationFrameId = requestAnimationFrame((t) => this.#tick(t))
   }
 
+  /** Advance element timers if the page is visible and not scrolling. */
+  #advanceTimers(): void {
+    if (!this.#isPageVisible || this.#isScrolling) return
+    const elapsed = this.#config.tickInterval / 1000
+
+    for (const element of this.#elements) {
+      if (element.isFullyRead || element.visibilityRatio === 0) continue
+      element.timer.advance(elapsed * element.visibilityRatio)
+    }
+  }
+
+  /** Compute metrics and notify all listeners. Returns the metrics snapshot. */
+  #notifyListeners(): EngagementMetrics {
+    const metrics = this.#computeMetrics()
+    for (const listener of this.#listeners) {
+      try {
+        listener.update(metrics)
+      } catch (e) {
+        console.warn('[kntnt-engagement-metrics] Listener error:', e)
+      }
+    }
+    return metrics
+  }
+
   #computeMetrics(): EngagementMetrics {
     let readingTime = 0
     let contentTime = 0
     let readingLength = 0
     let contentLength = 0
-    let scanningDepth = 0
 
     for (const element of this.#elements) {
       const timerProgress = element.readingProgress
@@ -220,16 +287,10 @@ export class Measurer {
       contentTime += element.timer.initialDuration
       readingLength += element.charCount * timerProgress
       contentLength += element.charCount
-
-      if (element.hasBeenSeen) {
-        const rect = element.node.getBoundingClientRect()
-        const elementBottom = rect.bottom + window.scrollY
-        if (elementBottom > scanningDepth) {
-          scanningDepth = elementBottom
-        }
-      }
     }
 
+    // Scanning depth is cached incrementally in #handleIntersection
+    const scanningDepth = this.#maxScanningDepth
     const contentDepth = document.documentElement.scrollHeight - window.innerHeight
     const readingRatio = contentLength > 0 ? readingLength / contentLength : 0
     const scanningRatio = contentDepth > 0 ? Math.min(1, scanningDepth / contentDepth) : 0

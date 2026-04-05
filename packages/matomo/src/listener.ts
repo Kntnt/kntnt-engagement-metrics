@@ -47,12 +47,16 @@ export class MatomoListener implements MetricsListener {
   }
 
   #trackEvent(category: string, action: string, name: string, value: number): void {
-    // TODO: Implement tracker auto-detection (Matomo JS tracker, dataLayer, etc.)
-    const _paq = (window as unknown as Record<string, unknown>)._paq as unknown[][] | undefined
-    if (_paq) {
-      _paq.push(['trackEvent', category, action, name, value])
-    } else {
-      console.warn('[kntnt-engagement-metrics-matomo] Matomo tracker not found')
+    try {
+      // Auto-detect Matomo tracker via the standard _paq global
+      const _paq = (window as unknown as Record<string, unknown>)._paq as unknown[][] | undefined
+      if (_paq) {
+        _paq.push(['trackEvent', category, action, name, value])
+      } else {
+        console.warn('[kntnt-engagement-metrics-matomo] Matomo tracker (_paq) not found')
+      }
+    } catch (e) {
+      console.warn('[kntnt-engagement-metrics-matomo] Failed to send event:', e)
     }
   }
 }

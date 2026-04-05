@@ -60,6 +60,15 @@ Test the metrics math in isolation by constructing elements with known values an
 - Events are not duplicated on repeated `update()` calls with the same metrics.
 - Missing tracker (`window._paq` / `window.gtag` undefined) logs a warning, does not throw.
 
+### Add-on listener test files
+
+The matomo and gtag packages each have a co-located test file (`listener.test.ts`) that exercises the listener in isolation. Tests mock `window._paq` (Matomo) and `window.gtag` (GA4) directly on `globalThis` and cover:
+
+- **Threshold event firing** — events are sent when each configured reading/scanning threshold is crossed.
+- **Event deduplication** — repeated `update()` calls with the same or lower metric values do not re-fire already-reported thresholds.
+- **Missing tracker handling** — when the tracker global is undefined, the listener logs a warning and does not throw.
+- **Broken tracker resilience** — when the tracker function (`_paq.push` / `gtag`) throws an error, the listener's try-catch in `#trackEvent` / `#sendEvent` absorbs it without crashing or stopping future event reporting.
+
 ## Level 2: Component tests (simulated DOM)
 
 Component tests exercise the Measurer class with a DOM environment provided by `jsdom`. They do NOT run a real browser — `jsdom` globals are registered via a Bun test preload script.

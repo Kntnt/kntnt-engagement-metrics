@@ -25,12 +25,16 @@ function start(config?: Partial<MeasurerConfig>): Measurer {
   return measurer
 }
 
-// Expose on the global namespace
-const ns = {
-  createMeasurer,
-  start,
-  version: VERSION,
-  measurer: null as Measurer | null,
+// Expose on the global namespace (guard against double-load)
+const existing = (window as unknown as Record<string, unknown>).KntntEngagementMetrics
+if (existing) {
+  console.warn('[kntnt-engagement-metrics] Already loaded, skipping duplicate initialization')
+} else {
+  const ns = {
+    createMeasurer,
+    start,
+    version: VERSION,
+    measurer: null as Measurer | null,
+  }
+  ;(window as unknown as Record<string, unknown>).KntntEngagementMetrics = ns
 }
-
-;(window as unknown as Record<string, unknown>).KntntEngagementMetrics = ns

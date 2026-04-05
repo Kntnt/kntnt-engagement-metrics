@@ -34,7 +34,10 @@ class Measurer {
   /** Expose tracked elements for visualization or diagnostic purposes. */
   getElements(): ReadonlyArray<TrackedElement>
 
-  /** Change the reading speed and recalibrate all timers, preserving progress. */
+  /**
+   * Change the reading speed and recalibrate all timers, preserving progress.
+   * Non-positive, NaN, and Infinity values are silently ignored (a warning is logged).
+   */
   setReadingSpeed(charsPerMinute: number): void
 
   /** True if measurement is currently running. */
@@ -83,6 +86,36 @@ interface EngagementMetrics {
 }
 ```
 
+### TrackedElement interface
+
+```typescript
+interface TrackedElement {
+  /** The DOM element being tracked. */
+  readonly node: Element
+
+  /** The countdown timer for this element's estimated reading time. */
+  readonly timer: Timer
+
+  /** Number of characters in the element's text content. */
+  readonly charCount: number
+
+  /** Fraction (0–1) of the element currently visible in the viewport. */
+  readonly visibilityRatio: number
+
+  /** True once the element has been scrolled into view at least once. */
+  readonly hasBeenSeen: boolean
+
+  /** True when the element's reading timer has reached zero. */
+  readonly isFullyRead: boolean
+
+  /** Reading progress (0–1), derived from the timer's progress. */
+  readonly readingProgress: number
+
+  /** Update visibility state from an IntersectionObserver entry. */
+  updateVisibility(entry: IntersectionObserverEntry): void
+}
+```
+
 ### Listener interface
 
 ```typescript
@@ -100,9 +133,17 @@ window.KntntEngagementMetrics = {
   createMeasurer: (config?) => Measurer,
   start: (config?) => Measurer,   // Convenience: create + start + return measurer
   version: string,
-  measurer: Measurer | null        // Populated after start() is called
+  measurer: Measurer | null        // Initially null — see note below
 }
 ```
+
+**`measurer` property:** The `start()` convenience function creates and starts a measurer, then returns it, but does **not** automatically assign it to the namespace. To make the measurer available for add-on IIFE scripts that look for it on the namespace, assign it explicitly:
+
+```javascript
+KntntEngagementMetrics.measurer = KntntEngagementMetrics.start({ /* config */ })
+```
+
+**Double-load protection:** The IIFE entry point guards against being loaded more than once. If the `window.KntntEngagementMetrics` namespace already exists, the duplicate script logs a warning and is skipped.
 
 ## Matomo add-on: @kntnt/engagement-metrics-matomo
 
@@ -147,6 +188,8 @@ window.KntntEngagementMetrics.matomo = {
 }
 ```
 
+**Double-load protection:** If the `.matomo` namespace property already exists, the duplicate script logs a warning and is skipped.
+
 ## Google Analytics 4 add-on: @kntnt/engagement-metrics-gtag
 
 ### Registration function
@@ -183,6 +226,8 @@ window.KntntEngagementMetrics.gtag = {
   register: (config?) => void   // Auto-registers with the global measurer
 }
 ```
+
+**Double-load protection:** If the `.gtag` namespace property already exists, the duplicate script logs a warning and is skipped.
 
 ## Visual overlay add-on: @kntnt/engagement-metrics-overlay
 
@@ -260,3 +305,5 @@ window.KntntEngagementMetrics.overlay = {
   register: (config?) => EngagementOverlay   // Auto-registers with the global measurer
 }
 ```
+
+**Double-load protection:** If the `.overlay` namespace property already exists, the duplicate script logs a warning and is skipped.

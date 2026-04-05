@@ -50,15 +50,18 @@ export class GtagListener implements MetricsListener {
   }
 
   #sendEvent(eventName: string, params: Record<string, unknown>): void {
-    // TODO: Implement tracker auto-detection (gtag, dataLayer, etc.)
-    const gtag = (window as unknown as Record<string, unknown>).gtag as
-      | ((...args: unknown[]) => void)
-      | undefined
+    try {
+      const gtag = (window as unknown as Record<string, unknown>).gtag as
+        | ((...args: unknown[]) => void)
+        | undefined
 
-    if (typeof gtag === 'function') {
-      gtag('event', eventName, params)
-    } else {
-      console.warn('[kntnt-engagement-metrics-gtag] gtag function not found')
+      if (typeof gtag === 'function') {
+        gtag('event', eventName, params)
+      } else {
+        console.warn('[kntnt-engagement-metrics-gtag] gtag function not found')
+      }
+    } catch (e) {
+      console.warn('[kntnt-engagement-metrics-gtag] Failed to send event:', e)
     }
   }
 }

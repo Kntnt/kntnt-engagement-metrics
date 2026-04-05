@@ -14,10 +14,16 @@ const ns = (window as unknown as Record<string, unknown>).KntntEngagementMetrics
   | undefined
 
 if (ns) {
-  const config = ((window as unknown as Record<string, unknown>)
-    .kntntEngagementMetricsOverlayConfig ?? {}) as Partial<OverlayConfig>
-  ns.overlay = {
-    register: (cfg?: Partial<OverlayConfig>) =>
-      registerOverlay(ns.measurer as never, cfg ?? config),
+  if (ns.overlay) {
+    console.warn('[kntnt-engagement-metrics-overlay] Already loaded, skipping')
+  } else {
+    const config = ((window as unknown as Record<string, unknown>)
+      .kntntEngagementMetricsOverlayConfig ?? {}) as Partial<OverlayConfig>
+    ns.overlay = {
+      register: (cfg?: Partial<OverlayConfig>) =>
+        registerOverlay(ns.measurer as never, cfg ?? config),
+    }
   }
+} else {
+  console.warn('[kntnt-engagement-metrics-overlay] Core library not loaded')
 }

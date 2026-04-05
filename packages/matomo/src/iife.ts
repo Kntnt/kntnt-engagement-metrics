@@ -11,9 +11,16 @@ const ns = (window as unknown as Record<string, unknown>).KntntEngagementMetrics
   | undefined
 
 if (ns) {
-  const config = ((window as unknown as Record<string, unknown>)
-    .kntntEngagementMetricsMatomoConfig ?? {}) as Partial<MatomoConfig>
-  ns.matomo = {
-    register: (cfg?: Partial<MatomoConfig>) => registerMatomo(ns.measurer as never, cfg ?? config),
+  if (ns.matomo) {
+    console.warn('[kntnt-engagement-metrics-matomo] Already loaded, skipping')
+  } else {
+    const config = ((window as unknown as Record<string, unknown>)
+      .kntntEngagementMetricsMatomoConfig ?? {}) as Partial<MatomoConfig>
+    ns.matomo = {
+      register: (cfg?: Partial<MatomoConfig>) =>
+        registerMatomo(ns.measurer as never, cfg ?? config),
+    }
   }
+} else {
+  console.warn('[kntnt-engagement-metrics-matomo] Core library not loaded')
 }

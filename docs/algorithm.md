@@ -50,9 +50,9 @@ All fields are optional. Defaults are applied for missing values.
 
 ### 1. Initialization
 
-1. Query the DOM using `document.querySelectorAll(config.selector)`.
+1. Query the DOM using `document.querySelectorAll(config.selector)`. Both `querySelectorAll()` and the `closest()` call in step 2 are wrapped in try-catch to handle invalid CSS selectors gracefully — an invalid selector logs a warning and results in an empty element list rather than throwing.
 2. If `config.exclude` is non-empty, filter out any element that matches `config.exclude` itself or has an ancestor matching `config.exclude` (i.e., `element.closest(config.exclude)` returns non-null).
-3. Filter out elements with zero `textContent.length`.
+3. Filter out non-HTML elements and zero-height elements: any node where `'offsetHeight' in node` is false (i.e., not an `HTMLElement`) or where `(node as HTMLElement).offsetHeight === 0` is excluded. Also filter out elements with zero `textContent.length`.
 4. For each element, create an `Element` instance with:
    - A reference to the DOM node.
    - A `Timer` initialized with `estimatedReadingTime` = `textContent.length / readingSpeed * 60` seconds.
@@ -67,8 +67,11 @@ All fields are optional. Defaults are applied for missing values.
 
 When an element's intersection changes:
 
-1. Update `element.visibilityRatio` to `entry.intersectionRatio`.
-2. If `entry.isIntersecting` and `element.hasBeenSeen` is false, set `element.hasBeenSeen = true`.
+1. Look up the corresponding `Element` instance via a `Map<Element, TrackedElement>` for O(1) access (no linear search).
+2. Update `element.visibilityRatio` to `entry.intersectionRatio`.
+3. If `entry.isIntersecting` and `element.hasBeenSeen` is false:
+   - Set `element.hasBeenSeen = true`.
+   - Update the cached `scanningDepth` incrementally: compute the element's absolute bottom position (`el.getBoundingClientRect().bottom + window.scrollY`) and keep the maximum across all seen elements. This avoids recalculating scanning depth on every tick.
 
 This callback fires asynchronously and efficiently — no polling needed for visibility changes.
 
@@ -77,7 +80,7 @@ This callback fires asynchronously and efficiently — no polling needed for vis
 **Purpose:** Pause reading timers while the user is actively scrolling, because a scrolling user is scanning, not reading.
 
 1. On each `scroll` event, record `Date.now()` as `lastScrollTime`.
-2. Compute instantaneous scroll speed: `|currentScrollY - previousScrollY| / timeDelta`.
+2. Compute instantaneous scroll speed: `(|currentScrollY - previousScrollY| / timeDelta) * 1000` where `timeDelta` is in milliseconds, so the multiplication converts the result to pixels per second.
 3. If scroll speed exceeds `scrollSpeedThreshold`, set `isScrolling = true`.
 4. After `scrollCooldown` milliseconds with no scroll event, set `isScrolling = false`.
 
@@ -115,7 +118,8 @@ function tick(timestamp):
 
     metrics = computeMetrics()
     for each listener in listeners:
-        listener.update(metrics)
+        try: listener.update(metrics)  // Each call is wrapped in try-catch so one
+        catch: continue                // listener's error cannot break others
 
     if metrics.readingRatio == 1.0 AND metrics.scanningRatio == 1.0:
         stop()  // All content read and scanned — done
@@ -164,7 +168,7 @@ interface EngagementMetrics {
 - `contentTime` = sum of `element.timer.initialDuration` for all elements.
 - `readingLength` = sum of `element.textContent.length * element.readingProgress` where `readingProgress = 1 - (remaining / initialDuration)`, capped at 1.
 - `contentLength` = sum of `element.textContent.length` for all elements.
-- `scanningDepth` = `Math.max(...seenElements.map(el => el.getBoundingClientRect().bottom + window.scrollY))` — the deepest point any seen element reaches.
+- `scanningDepth` = the cached maximum absolute bottom position across all seen elements, updated incrementally in the IntersectionObserver callback when an element is first seen (see section 2 above). No DOM reads occur during metrics computation.
 - `contentDepth` = `document.documentElement.scrollHeight - window.innerHeight`.
 - `readingRatio` = `readingLength / contentLength` (0 if contentLength is 0).
 - `scanningRatio` = `Math.min(1, scanningDepth / contentDepth)` (0 if contentDepth is 0).
@@ -206,7 +210,7 @@ class Timer {
 
 ## Runtime recalibration
 
-The reading speed can be changed at runtime via `measurer.setReadingSpeed(charsPerMinute)`. This recalibrates all element timers by computing a new `initialDuration` for each element (`charCount / newSpeed * 60`) and calling `timer.recalibrate()`, which preserves the current reading progress. Elements that have already been fully read remain complete. This enables real-time experimentation with different reading speeds using the overlay add-on.
+The reading speed can be changed at runtime via `measurer.setReadingSpeed(charsPerMinute)`. The method validates its input and rejects non-positive, `NaN`, or `Infinity` values. This recalibrates all element timers by computing a new `initialDuration` for each element (`charCount / newSpeed * 60`) and calling `timer.recalibrate()`, which preserves the current reading progress. Elements that have already been fully read remain complete. This enables real-time experimentation with different reading speeds using the overlay add-on.
 
 ## Edge cases
 
@@ -224,4 +228,5 @@ The reading speed can be changed at runtime via `measurer.setReadingSpeed(charsP
 - The `requestAnimationFrame` loop is automatically paused by the browser when the tab is hidden.
 - The scroll listener is registered as `passive: true` to avoid blocking scroll performance.
 - The tick function does minimal work: a single loop over tracked elements with simple arithmetic. No DOM reads during the tick.
-- The only DOM read happens during metrics computation (`scanningDepth`), which can be optimized by caching the deepest seen position incrementally.
+- Scanning depth is cached incrementally in the `IntersectionObserver` callback when elements are first seen, so metrics computation requires no DOM reads at all.
+- Element lookup in the `IntersectionObserver` callback uses a `Map<Element, TrackedElement>` for O(1) access, avoiding linear search over the tracked element list.

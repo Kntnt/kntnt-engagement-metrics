@@ -446,5 +446,108 @@ describe('Measurer', () => {
 
       measurer.stop()
     })
+
+    it('rejects zero reading speed', () => {
+      setupDOM(['Hello world'])
+      const measurer = new Measurer()
+      measurer.start()
+
+      const contentTimeBefore = measurer.getMetrics().contentTime
+      measurer.setReadingSpeed(0)
+      const contentTimeAfter = measurer.getMetrics().contentTime
+
+      // Timer should not have changed
+      expect(contentTimeAfter).toBe(contentTimeBefore)
+      measurer.stop()
+    })
+
+    it('rejects negative reading speed', () => {
+      setupDOM(['Hello world'])
+      const measurer = new Measurer()
+      measurer.start()
+
+      const contentTimeBefore = measurer.getMetrics().contentTime
+      measurer.setReadingSpeed(-100)
+
+      expect(measurer.getMetrics().contentTime).toBe(contentTimeBefore)
+      measurer.stop()
+    })
+
+    it('rejects NaN reading speed', () => {
+      setupDOM(['Hello world'])
+      const measurer = new Measurer()
+      measurer.start()
+
+      const contentTimeBefore = measurer.getMetrics().contentTime
+      measurer.setReadingSpeed(Number.NaN)
+
+      expect(measurer.getMetrics().contentTime).toBe(contentTimeBefore)
+      measurer.stop()
+    })
+  })
+
+  describe('error resilience', () => {
+    it('handles invalid selector gracefully', () => {
+      setupDOM(['Hello'])
+      const measurer = new Measurer({ selector: '>>>' })
+      measurer.start()
+
+      expect(measurer.isActive).toBe(false)
+      expect(measurer.getMetrics().contentLength).toBe(0)
+    })
+
+    it('handles invalid exclude selector gracefully', () => {
+      setupDOM(['Hello world'])
+      const measurer = new Measurer({ selector: 'p', exclude: '>>>invalid' })
+      measurer.start()
+
+      // Should not throw, but may find no elements due to break
+      expect(measurer.isActive).toBe(false)
+    })
+
+    it('continues notifying other listeners when one throws', () => {
+      setupDOM(['Listener test'])
+      const measurer = new Measurer({ tickInterval: 200 })
+
+      const updates: EngagementMetrics[] = []
+      const badListener: MetricsListener = {
+        update: () => {
+          throw new Error('Listener crash')
+        },
+      }
+      const goodListener: MetricsListener = { update: (m) => updates.push({ ...m }) }
+
+      measurer.addListener(badListener)
+      measurer.addListener(goodListener)
+      measurer.start()
+
+      const p = document.querySelector('p')!
+      mockObserverInstance!.trigger(p, 1.0, true)
+      jest.advanceTimersByTime(250)
+
+      // The good listener should still receive updates
+      expect(updates.length).toBeGreaterThan(0)
+      measurer.stop()
+    })
+
+    it('start/stop/start cycle works without duplicate elements', () => {
+      setupDOM(['Cycle test'])
+      const measurer = new Measurer()
+
+      measurer.start()
+      expect(measurer.getMetrics().contentLength).toBe('Cycle test'.length)
+      measurer.stop()
+
+      measurer.start()
+      // Should have the same content length, not doubled
+      expect(measurer.getMetrics().contentLength).toBe('Cycle test'.length)
+      measurer.stop()
+    })
+
+    it('setReadingSpeed before start does not throw', () => {
+      const measurer = new Measurer()
+      // Should not throw when no elements exist
+      expect(() => measurer.setReadingSpeed(500)).not.toThrow()
+    })
   })
 })
