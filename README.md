@@ -53,9 +53,29 @@ measurer.start()
 
 ### Using script tags (IIFE)
 
+The packages are not yet published to npm or a CDN. To use them, you build the files yourself:
+
+1. Install [Bun](https://bun.sh/) if you don't have it (it's a JavaScript toolkit, similar to Node.js):
+   ```bash
+   curl -fsSL https://bun.sh/install | bash
+   ```
+2. Download and build the project:
+   ```bash
+   git clone https://github.com/Kntnt/kntnt-engagement-metrics.git
+   cd kntnt-engagement-metrics
+   bun install
+   bun run build
+   ```
+3. Copy the built files to your website. They are located at:
+   - `packages/core/dist/kntnt-engagement-metrics.min.js`
+   - `packages/matomo/dist/kntnt-engagement-metrics-matomo.min.js` (if using Matomo)
+   - `packages/gtag/dist/kntnt-engagement-metrics-gtag.min.js` (if using Google Analytics)
+
+4. Add the scripts to your HTML:
+
 ```html
-<script src="https://cdn.example.com/kntnt-engagement-metrics.min.js"></script>
-<script src="https://cdn.example.com/kntnt-engagement-metrics-gtag.min.js"></script>
+<script src="/path/to/kntnt-engagement-metrics.min.js"></script>
+<script src="/path/to/kntnt-engagement-metrics-gtag.min.js"></script>
 <script>
   KntntEngagementMetrics.start({
     selector: 'article p',
@@ -92,6 +112,7 @@ For the full algorithm specification, see [`docs/algorithm.md`](docs/algorithm.m
 ```js
 createMeasurer({
   selector: 'p',                               // CSS selector for content elements
+  exclude: '',                                 // CSS selector for elements to exclude
   readingSpeed: 863,                           // characters per minute
   tickInterval: 200,                           // ms between measurement ticks
   observerThresholds: [0, 0.25, 0.5, 0.75, 1], // IntersectionObserver thresholds
