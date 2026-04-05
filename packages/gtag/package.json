@@ -23,7 +23,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target browser --format esm && bun build src/iife.ts --outdir dist --target browser --minify --naming kntnt-engagement-metrics-gtag.min.js",
+    "build": "bun build src/index.ts --outdir dist --target browser --format esm && bun build src/iife.ts --outfile dist/kntnt-engagement-metrics-gtag.min.js --target browser --minify",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/",
     "test": "bun test"
