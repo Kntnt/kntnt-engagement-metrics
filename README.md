@@ -126,6 +126,17 @@ measurer.start()
 
 The HUD panel includes a reading speed slider (100–3000 characters per minute) that recalibrates all timers instantly, letting you find the right speed for your content.
 
+## Live demo
+
+The repository includes a [demo page](demo.html) — a long-read article with the core library and overlay add-on running on it. To try it:
+
+1. Build the project (if you haven't already):
+   ```bash
+   bun install && bun run build
+   ```
+2. Open `demo.html` in your browser (just double-click the file or use `open demo.html` on macOS).
+3. Scroll and read the article. The overlay will color-code each paragraph by reading state and show live metrics in a panel at the bottom-right corner. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> to toggle the overlay on and off.
+
 ## How it works
 
 1. The library finds all content elements matching a CSS selector (default: `<p>` tags).
