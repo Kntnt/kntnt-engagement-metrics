@@ -141,7 +141,7 @@ The repository includes a [demo page](demo.html) — a long-read article with th
 
 1. The library finds all content elements matching a CSS selector (default: `<p>` tags).
 2. An `IntersectionObserver` tracks which elements are visible in the viewport.
-3. A lightweight tick loop estimates reading progress for each visible element, advancing proportionally to how much of the element is visible.
+3. A lightweight tick loop advances reading for one element at a time — the topmost unfinished visible paragraph — modelling a human reader who reads top to bottom. Reading progress within each element is capped at its visible boundary.
 4. Reading timers pause during active scrolling and when the browser tab is hidden.
 5. Metrics are emitted on each tick to registered listeners (analytics add-ons).
 
