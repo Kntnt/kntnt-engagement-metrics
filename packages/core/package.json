@@ -1,0 +1,36 @@
+{
+  "name": "@kntnt/engagement-metrics",
+  "version": "0.1.0",
+  "description": "Lightweight client-side library that measures how deeply users engage with content.",
+  "license": "MIT",
+  "author": "Kntnt Sweden AB <info@kntnt.se> (https://www.kntnt.se)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./iife": {
+      "default": "./dist/kntnt-engagement-metrics.min.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target browser --format esm && bun build src/iife.ts --outdir dist --target browser --minify --naming kntnt-engagement-metrics.min.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src/",
+    "test": "bun test"
+  },
+  "sideEffects": false,
+  "keywords": [
+    "engagement",
+    "metrics",
+    "analytics",
+    "reading-time",
+    "scroll-depth",
+    "content-analytics"
+  ]
+}

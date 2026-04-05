@@ -1,0 +1,37 @@
+{
+  "name": "@kntnt/engagement-metrics-gtag",
+  "version": "0.1.0",
+  "description": "Google Analytics 4 (gtag.js) add-on for @kntnt/engagement-metrics.",
+  "license": "MIT",
+  "author": "Kntnt Sweden AB <info@kntnt.se> (https://www.kntnt.se)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./iife": {
+      "default": "./dist/kntnt-engagement-metrics-gtag.min.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target browser --format esm && bun build src/iife.ts --outdir dist --target browser --minify --naming kntnt-engagement-metrics-gtag.min.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src/",
+    "test": "bun test"
+  },
+  "peerDependencies": {
+    "@kntnt/engagement-metrics": ">=0.1.0"
+  },
+  "keywords": [
+    "engagement",
+    "metrics",
+    "google-analytics",
+    "gtag",
+    "ga4"
+  ]
+}

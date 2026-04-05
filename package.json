@@ -1,0 +1,32 @@
+{
+  "name": "kntnt-engagement-metrics",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Measure how deeply users engage with content — reading vs. scanning, time spent, and completion rate.",
+  "license": "MIT",
+  "author": "Kntnt Sweden AB <info@kntnt.se> (https://www.kntnt.se)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kntnt/kntnt-engagement-metrics.git"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "bun run --filter '*' build",
+    "build:core": "bun run --filter @kntnt/engagement-metrics build",
+    "build:matomo": "bun run --filter @kntnt/engagement-metrics-matomo build",
+    "build:gtag": "bun run --filter @kntnt/engagement-metrics-gtag build",
+    "typecheck": "bun run --filter '*' typecheck",
+    "lint": "bun run --filter '*' lint",
+    "test": "bun test",
+    "test:e2e": "bun run build:core && bunx playwright test --config tests/e2e/playwright.config.ts",
+    "clean": "rm -rf packages/*/dist",
+    "prepare": "lefthook install"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@biomejs/biome": "^1.9.0",
+    "lefthook": "^1.9.0"
+  }
+}

@@ -1,0 +1,209 @@
+# Algorithm specification
+
+This document specifies the engagement measurement algorithm in full detail. An AI agent should be able to implement the entire core library from this specification alone.
+
+## Goal
+
+Estimate how much of a page's text content a visitor actually **reads** (as opposed to merely scrolls past), and how far they **scan** (scroll through). Produce a continuous stream of metrics that external systems can consume.
+
+## Definitions
+
+| Term | Definition |
+|------|-----------|
+| **Content element** | A DOM element containing text to be measured (default: all `<p>` elements) |
+| **Reading** | The visitor is assumed to be reading an element when it is visible in the viewport and the page is not being scrolled |
+| **Scanning** | The visitor has scrolled an element into view at least once, regardless of whether they paused to read |
+| **Visibility ratio** | The fraction (0–1) of a content element's bounding box that overlaps with the viewport |
+| **Reading speed** | Configurable parameter: characters per minute the average reader consumes (default: 863) |
+| **Estimated reading time** | `element.textContent.length / readingSpeed * 60` (in seconds) |
+
+## Configuration
+
+```typescript
+interface MeasurerConfig {
+  /** CSS selector for content elements. Default: 'p' */
+  selector: string
+
+  /** Average reading speed in characters per minute. Default: 863 */
+  readingSpeed: number
+
+  /** Milliseconds between measurement ticks. Default: 200 */
+  tickInterval: number
+
+  /** IntersectionObserver threshold steps (array of ratios 0–1). Default: [0, 0.25, 0.5, 0.75, 1.0] */
+  observerThresholds: number[]
+
+  /** Minimum scroll speed (px/sec) to count as active scrolling. Default: 50 */
+  scrollSpeedThreshold: number
+
+  /** Milliseconds after last scroll event before reading resumes. Default: 500 */
+  scrollCooldown: number
+}
+```
+
+All fields are optional. Defaults are applied for missing values.
+
+## Lifecycle
+
+### 1. Initialization
+
+1. Query the DOM using `document.querySelectorAll(config.selector)`.
+2. Filter out elements with zero `textContent.length`.
+3. For each element, create an `Element` instance with:
+   - A reference to the DOM node.
+   - A `Timer` initialized with `estimatedReadingTime` = `textContent.length / readingSpeed * 60` seconds.
+   - `visibilityRatio` = 0.
+   - `hasBeenSeen` = false.
+   - `isFullyRead` = false.
+4. Set up an `IntersectionObserver` with the configured thresholds, observing all content elements.
+5. Register a scroll listener (passive) on the window.
+6. Register a `visibilitychange` listener on the document.
+
+### 2. IntersectionObserver callback
+
+When an element's intersection changes:
+
+1. Update `element.visibilityRatio` to `entry.intersectionRatio`.
+2. If `entry.isIntersecting` and `element.hasBeenSeen` is false, set `element.hasBeenSeen = true`.
+
+This callback fires asynchronously and efficiently — no polling needed for visibility changes.
+
+### 3. Scroll detection
+
+**Purpose:** Pause reading timers while the user is actively scrolling, because a scrolling user is scanning, not reading.
+
+1. On each `scroll` event, record `Date.now()` as `lastScrollTime`.
+2. Compute instantaneous scroll speed: `|currentScrollY - previousScrollY| / timeDelta`.
+3. If scroll speed exceeds `scrollSpeedThreshold`, set `isScrolling = true`.
+4. After `scrollCooldown` milliseconds with no scroll event, set `isScrolling = false`.
+
+Implementation note: use a single `setTimeout` that is reset on each scroll event, rather than a moving-average approach.
+
+### 4. Page visibility
+
+1. Listen for the `visibilitychange` event on `document`.
+2. When `document.visibilityState !== 'visible'`, set `isPageVisible = false`.
+3. When visible again, set `isPageVisible = true`.
+4. While `isPageVisible` is false, no timers advance.
+
+### 5. Measurement tick
+
+A `requestAnimationFrame`-based loop runs every `tickInterval` milliseconds (throttled by checking elapsed time against `tickInterval`):
+
+```
+function tick(timestamp):
+    if timestamp - lastTickTime < tickInterval: return
+    lastTickTime = timestamp
+
+    if NOT isPageVisible: return
+    if isScrolling: return
+
+    for each element in trackedElements:
+        if element.isFullyRead: continue
+        if element.visibilityRatio == 0: continue
+
+        // Advance the timer proportionally to visibility and elapsed time
+        elapsed = tickInterval / 1000  // seconds
+        element.timer.advance(elapsed * element.visibilityRatio)
+
+        if element.timer.remaining <= 0:
+            element.isFullyRead = true
+
+    metrics = computeMetrics()
+    for each listener in listeners:
+        listener.update(metrics)
+
+    if metrics.readingRatio == 1.0 AND metrics.scanningRatio == 1.0:
+        stop()  // All content read and scanned — done
+    else:
+        requestAnimationFrame(tick)
+```
+
+### 6. Metrics computation
+
+After each tick, compute and emit:
+
+```typescript
+interface EngagementMetrics {
+  /** Estimated seconds of actual reading so far */
+  readingTime: number
+
+  /** Total estimated reading time for all content */
+  contentTime: number
+
+  /** Estimated characters read so far */
+  readingLength: number
+
+  /** Total characters across all content elements */
+  contentLength: number
+
+  /** Maximum vertical scroll position reached (pixels) */
+  scanningDepth: number
+
+  /** Total scrollable content height (pixels) */
+  contentDepth: number
+
+  /** readingLength / contentLength (0–1) */
+  readingRatio: number
+
+  /** scanningDepth / contentDepth (0–1, capped at 1) */
+  scanningRatio: number
+
+  /** True if measurement is still running */
+  isActive: boolean
+}
+```
+
+**Calculation details:**
+
+- `readingTime` = sum of `(element.timer.initialDuration - element.timer.remaining)` for all elements, floored at 0.
+- `contentTime` = sum of `element.timer.initialDuration` for all elements.
+- `readingLength` = sum of `element.textContent.length * element.readingProgress` where `readingProgress = 1 - (remaining / initialDuration)`, capped at 1.
+- `contentLength` = sum of `element.textContent.length` for all elements.
+- `scanningDepth` = `Math.max(...seenElements.map(el => el.getBoundingClientRect().bottom + window.scrollY))` — the deepest point any seen element reaches.
+- `contentDepth` = `document.documentElement.scrollHeight - window.innerHeight`.
+- `readingRatio` = `readingLength / contentLength` (0 if contentLength is 0).
+- `scanningRatio` = `Math.min(1, scanningDepth / contentDepth)` (0 if contentDepth is 0).
+
+## Timer class
+
+```typescript
+class Timer {
+    readonly initialDuration: number  // seconds
+    remaining: number                 // seconds
+
+    constructor(durationSeconds: number)
+
+    /** Advance the timer by the given number of seconds. */
+    advance(seconds: number): void {
+        this.remaining = Math.max(0, this.remaining - seconds)
+    }
+
+    get isComplete(): boolean {
+        return this.remaining <= 0
+    }
+
+    get progress(): number {
+        if (this.initialDuration === 0) return 1
+        return 1 - this.remaining / this.initialDuration
+    }
+}
+```
+
+## Edge cases
+
+1. **Empty page** — if no content elements are found, emit metrics with all values at 0 and `isActive = false`. Do not start the measurement loop.
+2. **Single element** — works normally; the algorithm has no special-casing for element count.
+3. **Dynamically added content** — NOT supported in v0.1. A future version may add a `MutationObserver` to detect new elements.
+4. **Iframes** — the library measures only the document it is loaded in. Cross-frame measurement is out of scope.
+5. **Zero-height elements** — filtered out during initialization (elements with `offsetHeight === 0` are skipped).
+6. **Very long elements** — the IntersectionObserver thresholds handle partial visibility. A 2000px-tall paragraph at 25% visibility advances at 0.25× speed.
+7. **Rapid tab switching** — the page visibility handler pauses and resumes cleanly. No time "leaks" during hidden periods.
+
+## Performance considerations
+
+- The `IntersectionObserver` callback is handled by the browser's compositor thread — it is much cheaper than polling `getBoundingClientRect()` on every tick.
+- The `requestAnimationFrame` loop is automatically paused by the browser when the tab is hidden.
+- The scroll listener is registered as `passive: true` to avoid blocking scroll performance.
+- The tick function does minimal work: a single loop over tracked elements with simple arithmetic. No DOM reads during the tick.
+- The only DOM read happens during metrics computation (`scanningDepth`), which can be optimized by caching the deepest seen position incrementally.

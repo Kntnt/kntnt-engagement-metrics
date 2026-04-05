@@ -1,0 +1,20 @@
+# Lefthook — Git hooks managed via config file.
+# Install: bun add -d lefthook && bunx lefthook install
+# Docs: https://github.com/evilmartians/lefthook
+
+pre-commit:
+  parallel: true
+  commands:
+    lint:
+      glob: "*.{ts,js,json}"
+      run: bunx biome check --no-errors-on-unmatched {staged_files}
+    typecheck:
+      run: bun run typecheck
+
+pre-push:
+  parallel: false
+  commands:
+    test:
+      run: bun test
+    build:
+      run: bun run build
