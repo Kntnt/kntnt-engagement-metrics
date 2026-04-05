@@ -329,4 +329,63 @@ describe('Measurer', () => {
     expect(metrics.contentLength).toBe('Idempotent test'.length)
     measurer.stop()
   })
+
+  it('exclude filters out elements matching the exclude selector', () => {
+    document.body.innerHTML =
+      '<p>Keep this</p><p class="sidebar">Exclude this</p><p>Keep this too</p>'
+    for (const p of document.querySelectorAll('p')) {
+      Object.defineProperty(p, 'offsetHeight', { value: 20, configurable: true })
+    }
+
+    const measurer = new Measurer({ exclude: '.sidebar' })
+    measurer.start()
+    const metrics = measurer.getMetrics()
+
+    expect(metrics.contentLength).toBe('Keep this'.length + 'Keep this too'.length)
+    measurer.stop()
+  })
+
+  it('exclude filters out elements inside an ancestor matching exclude', () => {
+    document.body.innerHTML =
+      '<p>Keep</p><div class="nav"><p>Exclude nested</p></div><p>Also keep</p>'
+    for (const p of document.querySelectorAll('p')) {
+      Object.defineProperty(p, 'offsetHeight', { value: 20, configurable: true })
+    }
+
+    const measurer = new Measurer({ exclude: '.nav' })
+    measurer.start()
+    const metrics = measurer.getMetrics()
+
+    expect(metrics.contentLength).toBe('Keep'.length + 'Also keep'.length)
+    measurer.stop()
+  })
+
+  it('exclude does not filter when set to empty string (default)', () => {
+    document.body.innerHTML = '<p class="sidebar">Not excluded</p><p>Also not excluded</p>'
+    for (const p of document.querySelectorAll('p')) {
+      Object.defineProperty(p, 'offsetHeight', { value: 20, configurable: true })
+    }
+
+    const measurer = new Measurer({ exclude: '' })
+    measurer.start()
+    const metrics = measurer.getMetrics()
+
+    expect(metrics.contentLength).toBe('Not excluded'.length + 'Also not excluded'.length)
+    measurer.stop()
+  })
+
+  it('elements not matching exclude are kept', () => {
+    document.body.innerHTML =
+      '<p class="content">Kept</p><p class="footer">Excluded</p><p class="content">Also kept</p>'
+    for (const p of document.querySelectorAll('p')) {
+      Object.defineProperty(p, 'offsetHeight', { value: 20, configurable: true })
+    }
+
+    const measurer = new Measurer({ exclude: '.footer' })
+    measurer.start()
+    const metrics = measurer.getMetrics()
+
+    expect(metrics.contentLength).toBe('Kept'.length + 'Also kept'.length)
+    measurer.stop()
+  })
 })

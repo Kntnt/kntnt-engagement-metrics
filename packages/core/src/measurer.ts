@@ -3,6 +3,7 @@ import type { EngagementMetrics, MeasurerConfig, MetricsListener } from './types
 
 const DEFAULTS: MeasurerConfig = {
   selector: 'p',
+  exclude: '',
   readingSpeed: 863,
   tickInterval: 200,
   observerThresholds: [0, 0.25, 0.5, 0.75, 1.0],
@@ -57,7 +58,9 @@ export class Measurer {
 
     // Discover content elements
     const nodes = document.querySelectorAll(this.#config.selector)
+    const excludeSelector = this.#config.exclude
     for (const node of nodes) {
+      if (excludeSelector && node.closest(excludeSelector)) continue
       if ((node as HTMLElement).offsetHeight === 0) continue
       if ((node.textContent ?? '').length === 0) continue
       this.#elements.push(new TrackedElement(node, this.#config.readingSpeed))

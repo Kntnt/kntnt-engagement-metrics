@@ -6,6 +6,9 @@ export interface MeasurerConfig {
   /** CSS selector for content elements. Default: `'p'` */
   readonly selector: string
 
+  /** CSS selector for elements to exclude. Any element matched by `selector` is excluded if it matches `exclude` itself or has an ancestor matching `exclude`. Default: `''` (no exclusions) */
+  readonly exclude: string
+
   /** Average reading speed in characters per minute. Default: `863` */
   readonly readingSpeed: number
 
