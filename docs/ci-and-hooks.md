@@ -8,9 +8,10 @@ This document describes the automated quality gates that run both locally (Git h
 
 ### Setup (one-time, after cloning)
 
+Lefthook is already listed in `devDependencies`, so `bun install` installs it automatically. The `prepare` script then runs `lefthook install` to set up the hooks:
+
 ```bash
-bun add -d lefthook
-bunx lefthook install
+bun install    # installs lefthook and runs "prepare" → lefthook install
 ```
 
 This writes thin wrapper scripts into `.git/hooks/` that delegate to `lefthook.yml`.

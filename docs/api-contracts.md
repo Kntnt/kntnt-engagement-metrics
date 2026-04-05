@@ -92,8 +92,9 @@ When loaded via `<script>` tag, the IIFE build exposes:
 ```typescript
 window.KntntEngagementMetrics = {
   createMeasurer: (config?) => Measurer,
-  start: (config?) => void,       // Convenience: create + start + return measurer
-  version: string
+  start: (config?) => Measurer,   // Convenience: create + start + return measurer
+  version: string,
+  measurer: Measurer | null        // Populated after start() is called
 }
 ```
 

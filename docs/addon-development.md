@@ -75,17 +75,22 @@ export function registerMyAnalytics(measurer: Measurer, config?: Partial<MyConfi
 
 ### 5. Create the IIFE entry point
 
-The IIFE entry point auto-registers with the global measurer:
+The IIFE entry point exposes a `register` function on the global namespace:
 
 ```typescript
 import { registerMyAnalytics } from './index.js'
+import type { MyConfig } from './types.js'
 
-// Access the global measurer created by the core IIFE
-const ns = (window as any).KntntEngagementMetrics
-if (ns?.measurer) {
-  const config = (window as any).kntntEngagementMetricsMyConfig ?? {}
-  registerMyAnalytics(ns.measurer, config)
-  ns.myAnalytics = { register: registerMyAnalytics }
+const ns = (window as unknown as Record<string, unknown>).KntntEngagementMetrics as
+  | { measurer?: { addListener: (l: unknown) => void }; myAnalytics?: unknown }
+  | undefined
+
+if (ns) {
+  const config = ((window as unknown as Record<string, unknown>).kntntEngagementMetricsMyConfig ??
+    {}) as Partial<MyConfig>
+  ns.myAnalytics = {
+    register: (cfg?: Partial<MyConfig>) => registerMyAnalytics(ns.measurer as never, cfg ?? config),
+  }
 }
 ```
 

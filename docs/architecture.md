@@ -56,12 +56,15 @@ Biome is a single tool that replaces both ESLint and Prettier with near-instant 
 
 ```
 packages/core/src/
-├── index.ts        → Public API (re-exports)
-├── iife.ts         → IIFE entry point (auto-starts measurement)
-├── measurer.ts     → Orchestrator: observes elements, manages timers, emits metrics
-├── element.ts      → Tracks a single content element's visibility and reading state
-├── timer.ts        → Countdown timer that advances proportionally to visibility
-└── types.ts        → Shared TypeScript interfaces and types
+├── index.ts             → Public API (re-exports)
+├── iife.ts              → IIFE entry point (auto-starts measurement)
+├── measurer.ts          → Orchestrator: observes elements, manages timers, emits metrics
+├── measurer.test.ts     → Component tests (jsdom + mock IntersectionObserver)
+├── element.ts           → Tracks a single content element's visibility and reading state
+├── element.test.ts      → Unit tests
+├── timer.ts             → Countdown timer that advances proportionally to visibility
+├── timer.test.ts        → Unit tests
+└── types.ts             → Shared TypeScript interfaces and types
 ```
 
 ### Key classes

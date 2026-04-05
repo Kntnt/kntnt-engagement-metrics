@@ -44,9 +44,9 @@ All other agents: read the relevant files in `docs/` before writing any code:
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| TypeScript | ^5.7 | Language (strict mode, ES2022 target) |
+| TypeScript | ^6.0 | Language (strict mode, ES2022 target) |
 | Bun | latest | Package manager, bundler, test runner |
-| Biome | ^1.9 | Linter and formatter (replaces ESLint + Prettier) |
+| Biome | ^2.4 | Linter and formatter (replaces ESLint + Prettier) |
 
 ## Essential commands
 
