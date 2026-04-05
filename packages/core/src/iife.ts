@@ -34,5 +34,3 @@ const ns = {
 }
 
 ;(window as unknown as Record<string, unknown>).KntntEngagementMetrics = ns
-
-export { ns as KntntEngagementMetrics }

@@ -41,12 +41,24 @@ class Measurer {
 ```typescript
 interface MeasurerConfig {
   selector: string              // Default: 'p'
+  exclude: string               // Default: '' (no exclusions)
   readingSpeed: number          // Default: 863 (chars/min)
   tickInterval: number          // Default: 200 (ms)
   observerThresholds: number[]  // Default: [0, 0.25, 0.5, 0.75, 1.0]
   scrollSpeedThreshold: number  // Default: 50 (px/sec)
   scrollCooldown: number        // Default: 500 (ms)
 }
+```
+
+**`selector`** selects which elements to measure. **`exclude`** is a CSS selector that filters out unwanted elements: any element matched by `selector` is excluded if it matches `exclude` itself or has an ancestor that matches `exclude`. This lets users target broad content selectors while excluding sidebars, navigation, footers, and other non-content areas. When `exclude` is an empty string (the default), no filtering occurs.
+
+Example:
+
+```typescript
+createMeasurer({
+  selector: '#content :is(h1, h2, h3, p, ul, ol)',
+  exclude: '.sidebar, .footer, .table-of-contents',
+})
 ```
 
 ### Metrics type

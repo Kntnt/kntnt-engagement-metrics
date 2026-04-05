@@ -24,6 +24,9 @@ interface MeasurerConfig {
   /** CSS selector for content elements. Default: 'p' */
   selector: string
 
+  /** CSS selector for elements to exclude. Default: '' (no exclusions) */
+  exclude: string
+
   /** Average reading speed in characters per minute. Default: 863 */
   readingSpeed: number
 
@@ -48,16 +51,17 @@ All fields are optional. Defaults are applied for missing values.
 ### 1. Initialization
 
 1. Query the DOM using `document.querySelectorAll(config.selector)`.
-2. Filter out elements with zero `textContent.length`.
-3. For each element, create an `Element` instance with:
+2. If `config.exclude` is non-empty, filter out any element that matches `config.exclude` itself or has an ancestor matching `config.exclude` (i.e., `element.closest(config.exclude)` returns non-null).
+3. Filter out elements with zero `textContent.length`.
+4. For each element, create an `Element` instance with:
    - A reference to the DOM node.
    - A `Timer` initialized with `estimatedReadingTime` = `textContent.length / readingSpeed * 60` seconds.
    - `visibilityRatio` = 0.
    - `hasBeenSeen` = false.
    - `isFullyRead` = false.
-4. Set up an `IntersectionObserver` with the configured thresholds, observing all content elements.
-5. Register a scroll listener (passive) on the window.
-6. Register a `visibilitychange` listener on the document.
+5. Set up an `IntersectionObserver` with the configured thresholds, observing all content elements.
+6. Register a scroll listener (passive) on the window.
+7. Register a `visibilitychange` listener on the document.
 
 ### 2. IntersectionObserver callback
 
