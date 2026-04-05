@@ -17,7 +17,7 @@
     "build:core": "bun run --filter @kntnt/engagement-metrics build",
     "build:matomo": "bun run --filter @kntnt/engagement-metrics-matomo build",
     "build:gtag": "bun run --filter @kntnt/engagement-metrics-gtag build",
-    "typecheck": "bun run --filter '*' typecheck",
+    "typecheck": "bun run --filter @kntnt/engagement-metrics typecheck && bun run --filter '@kntnt/engagement-metrics-*' typecheck",
     "lint": "bun run --filter '*' lint",
     "test": "bun test",
     "test:e2e": "bun run build:core && bunx playwright test --config tests/e2e/playwright.config.ts",
