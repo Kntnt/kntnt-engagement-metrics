@@ -71,9 +71,9 @@ packages/core/src/
 
 ### Key classes
 
-- **`Measurer`** — the central orchestrator. Created with a configuration object. Discovers content elements in the DOM, creates `Element` instances, runs measurement ticks, and notifies listeners. Internally it stores tracked elements in a `Map<Element, TrackedElement>` for O(1) lookup when `IntersectionObserver` callbacks fire. Scanning depth is cached incrementally (updated when elements are first seen) rather than recomputed from the DOM on every tick. Listener notifications are error-isolated: each `listener.update()` call is wrapped in a try-catch so that a failing listener cannot break other listeners or the measurement loop.
+- **`Measurer`** — the central orchestrator. Created with a configuration object. Discovers content elements in the DOM, creates `Element` instances, and runs a measurement tick loop that advances **only the topmost unfinished visible element** per tick (sequential, top-to-bottom reading model). Notifies registered listeners after each tick. Internally it stores tracked elements in a `Map<Element, TrackedElement>` for O(1) lookup when `IntersectionObserver` callbacks fire. Scanning depth is cached incrementally (updated when elements are first seen) rather than recomputed from the DOM on every tick. Listener notifications are error-isolated: each `listener.update()` call is wrapped in a try-catch so that a failing listener cannot break other listeners or the measurement loop.
 - **`Element`** — represents a single tracked DOM element (typically a `<p>` tag). Holds a `Timer` and tracks the element's visibility ratio within the viewport.
-- **`Timer`** — a countdown that represents estimated reading time for one element. Advances proportionally to the element's visibility ratio (100% visible = full speed, 50% visible = half speed, 0% = paused).
+- **`Timer`** — a countdown that represents estimated reading time for one element. Each tick, the measurer sets the timer's `targetRatio` to the element's current visibility ratio before calling `advance()`, which caps progress at that ratio. This models "read only up to the visible boundary" semantics: a partially visible element cannot be counted as fully read until it is fully visible.
 
 ### Listener interface
 
