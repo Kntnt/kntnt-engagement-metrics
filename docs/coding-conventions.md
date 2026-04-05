@@ -62,7 +62,7 @@ Biome enforces most style rules automatically. These are the project-specific co
 - Test files: co-located with source files as `*.test.ts` (e.g., `timer.test.ts`).
 - Test naming: use `describe` / `it` blocks with descriptive names.
 - Focus on unit tests for Timer, Element, and metrics computation.
-- Integration tests for the full Measurer lifecycle may use `jsdom` or `happy-dom`.
+- Integration tests for the full Measurer lifecycle use `jsdom`.
 
 ## Git conventions
 

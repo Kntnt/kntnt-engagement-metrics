@@ -33,6 +33,6 @@ const ns = {
   measurer: null as Measurer | null,
 }
 
-;(window as Record<string, unknown>).KntntEngagementMetrics = ns
+;(window as unknown as Record<string, unknown>).KntntEngagementMetrics = ns
 
 export { ns as KntntEngagementMetrics }

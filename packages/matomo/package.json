@@ -17,7 +17,11 @@
       "default": "./dist/kntnt-engagement-metrics-matomo.min.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target browser --format esm && bun build src/iife.ts --outdir dist --target browser --minify --naming kntnt-engagement-metrics-matomo.min.js",
     "typecheck": "tsc --noEmit",

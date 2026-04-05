@@ -3,6 +3,4 @@
 exact = true
 
 [test]
-# Test configuration
-root = "."
-preload = []
+preload = ["./test-preload.ts"]

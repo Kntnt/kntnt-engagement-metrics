@@ -29,7 +29,9 @@ kntnt-engagement-metrics/
 
 ## Before you start coding
 
-Read the relevant files in `docs/`:
+If you are Claude Code: the `docs/` files are already loaded via `@import` in `CLAUDE.md` — do NOT re-read them.
+
+All other agents: read the relevant files in `docs/` before writing any code:
 
 1. **Always read first:** `docs/architecture.md` for the overall design.
 2. **For core work:** `docs/algorithm.md` + `docs/api-contracts.md`.
@@ -67,10 +69,15 @@ bun run test:e2e     # Integration tests (Playwright, headless Chromium)
 6. **Passive event listeners:** all scroll/touch listeners must use `{ passive: true }`.
 7. **Minimal DOM reads:** the measurement tick loop must not read from the DOM. Use `IntersectionObserver` callbacks to update visibility state asynchronously.
 
+## Gotchas
+
+- `bun build` does NOT generate `.d.ts` files. Use `tsc --emitDeclarationOnly` for type declarations if needed for npm publishing.
+- The IIFE global namespace is `window.KntntEngagementMetrics`. Add-ons attach to sub-properties (e.g., `.matomo`, `.gtag`).
+
 ## Conventions
 
 - **Files:** `kebab-case.ts`. **Tests:** co-located as `kebab-case.test.ts`.
 - **Classes/interfaces/types:** `PascalCase`. **Functions/variables:** `camelCase`.
 - **Branches:** `feat/`, `fix/`, `docs/`, `refactor/` prefixes.
 - **Commits:** imperative mood, max 72 characters subject line.
-- **Testing:** `bun test` (Jest-compatible API). Mock the DOM with `happy-dom` for integration tests.
+- **Testing:** `bun test` (Jest-compatible API). Mock the DOM with `jsdom` for component tests.

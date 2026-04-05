@@ -36,14 +36,19 @@ export class MatomoListener implements MetricsListener {
     for (const threshold of this.#config.scanningThresholds) {
       if (scanningPct >= threshold && !this.#reportedScanningThresholds.has(threshold)) {
         this.#reportedScanningThresholds.add(threshold)
-        this.#trackEvent('Engagement', 'Scanning', `${threshold}%`, Math.round(metrics.scanningDepth))
+        this.#trackEvent(
+          'Engagement',
+          'Scanning',
+          `${threshold}%`,
+          Math.round(metrics.scanningDepth),
+        )
       }
     }
   }
 
   #trackEvent(category: string, action: string, name: string, value: number): void {
     // TODO: Implement tracker auto-detection (Matomo JS tracker, dataLayer, etc.)
-    const _paq = (window as Record<string, unknown>)._paq as unknown[][] | undefined
+    const _paq = (window as unknown as Record<string, unknown>)._paq as unknown[][] | undefined
     if (_paq) {
       _paq.push(['trackEvent', category, action, name, value])
     } else {

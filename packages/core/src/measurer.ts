@@ -64,15 +64,17 @@ export class Measurer {
     }
 
     if (this.#elements.length === 0) {
-      console.warn('[kntnt-engagement-metrics] No content elements found for selector:', this.#config.selector)
+      console.warn(
+        '[kntnt-engagement-metrics] No content elements found for selector:',
+        this.#config.selector,
+      )
       return
     }
 
     // Set up IntersectionObserver
-    this.#observer = new IntersectionObserver(
-      (entries) => this.#handleIntersection(entries),
-      { threshold: this.#config.observerThresholds },
-    )
+    this.#observer = new IntersectionObserver((entries) => this.#handleIntersection(entries), {
+      threshold: this.#config.observerThresholds,
+    })
     for (const element of this.#elements) {
       this.#observer.observe(element.node)
     }

@@ -51,7 +51,7 @@ export class GtagListener implements MetricsListener {
 
   #sendEvent(eventName: string, params: Record<string, unknown>): void {
     // TODO: Implement tracker auto-detection (gtag, dataLayer, etc.)
-    const gtag = (window as Record<string, unknown>).gtag as
+    const gtag = (window as unknown as Record<string, unknown>).gtag as
       | ((...args: unknown[]) => void)
       | undefined
 

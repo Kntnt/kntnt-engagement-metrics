@@ -7,7 +7,7 @@ This document specifies how the project is tested. All tests are automated and r
 | Level | Scope | Tool | Location | Speed |
 |-------|-------|------|----------|-------|
 | Unit | Pure logic (Timer, TrackedElement, metrics math) | `bun test` | `packages/*/src/*.test.ts` | < 1 s |
-| Component | Measurer + add-ons with simulated DOM | `bun test` + `happy-dom` | `packages/*/src/*.test.ts` | < 5 s |
+| Component | Measurer + add-ons with simulated DOM | `bun test` + `jsdom` | `packages/*/src/*.test.ts` | < 5 s |
 | Integration | Full library in a real browser | Playwright | `tests/e2e/` | < 30 s |
 
 ### Running tests
@@ -62,21 +62,23 @@ Test the metrics math in isolation by constructing elements with known values an
 
 ## Level 2: Component tests (simulated DOM)
 
-Component tests exercise the Measurer class with a DOM environment provided by `happy-dom`. They do NOT run a real browser — `happy-dom` is loaded as a Bun test preset.
+Component tests exercise the Measurer class with a DOM environment provided by `jsdom`. They do NOT run a real browser — `jsdom` globals are registered via a Bun test preload script.
 
 ### Setup
 
 ```typescript
-// bunfig.toml (or per-test config)
+// bunfig.toml
 [test]
-preload = ["happy-dom"]
+preload = ["./test-preload.ts"]
 ```
+
+The preload script (`test-preload.ts` at the repo root) creates a `jsdom` `Window` and registers essential DOM globals (`document`, `window`, `Element`, `requestAnimationFrame`, etc.) on `globalThis`.
 
 Each test creates an HTML document with `<p>` elements, instantiates a Measurer, and controls the IntersectionObserver and time progression manually.
 
 ### Mocking IntersectionObserver
 
-`happy-dom` does not implement IntersectionObserver. The tests must provide a mock:
+`jsdom` does not implement IntersectionObserver. The tests must provide a mock:
 
 ```typescript
 class MockIntersectionObserver implements IntersectionObserver {

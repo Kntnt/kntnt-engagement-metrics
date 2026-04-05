@@ -17,10 +17,14 @@
       "default": "./dist/kntnt-engagement-metrics.min.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target browser --format esm && bun build src/iife.ts --outdir dist --target browser --minify --naming kntnt-engagement-metrics.min.js",
-    "typecheck": "tsc --noEmit",
+    "build": "tsc && bun build src/index.ts --outdir dist --target browser --format esm && bun build src/iife.ts --outfile dist/kntnt-engagement-metrics.min.js --target browser --minify",
+    "typecheck": "tsc",
     "lint": "biome check src/",
     "test": "bun test"
   },

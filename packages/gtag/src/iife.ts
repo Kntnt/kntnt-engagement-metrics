@@ -6,11 +6,14 @@
 import { registerGtag } from './index.js'
 import type { GtagConfig } from './types.js'
 
-const ns = (window as Record<string, unknown>).KntntEngagementMetrics as
+const ns = (window as unknown as Record<string, unknown>).KntntEngagementMetrics as
   | { measurer?: { addListener: (l: unknown) => void }; gtag?: unknown }
   | undefined
 
 if (ns) {
-  const config = ((window as Record<string, unknown>).kntntEngagementMetricsGtagConfig ?? {}) as Partial<GtagConfig>
-  ns.gtag = { register: (cfg?: Partial<GtagConfig>) => registerGtag(ns.measurer as never, cfg ?? config) }
+  const config = ((window as unknown as Record<string, unknown>).kntntEngagementMetricsGtagConfig ??
+    {}) as Partial<GtagConfig>
+  ns.gtag = {
+    register: (cfg?: Partial<GtagConfig>) => registerGtag(ns.measurer as never, cfg ?? config),
+  }
 }
