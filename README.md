@@ -10,6 +10,19 @@ It's a tiny JavaScript library that runs silently on your pages. It watches what
 
 The library is open source, lightweight (< 4 KB), has zero dependencies, and is designed to impose near-zero performance overhead on your visitors.
 
+## Live demo
+
+**[Try the live demo](https://kntnt.github.io/kntnt-engagement-metrics/)** — a long-read article with the core library and overlay add-on running on it. Scroll and read the article. The overlay color-codes each paragraph by reading state and shows live metrics in a panel at the bottom-right corner. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> to toggle the overlay on and off.
+
+You can also run the demo locally by cloning the repository, building the project, and opening `demo.html` in your browser:
+
+```bash
+git clone https://github.com/Kntnt/kntnt-engagement-metrics.git
+cd kntnt-engagement-metrics
+bun install && bun run build
+open demo.html  # or just double-click the file
+```
+
 ## How it works
 
 The library distinguishes between two behaviours:
@@ -125,17 +138,6 @@ measurer.start()
 ```
 
 The HUD panel includes a reading speed slider (100–3000 characters per minute) that recalibrates all timers instantly, letting you find the right speed for your content.
-
-## Live demo
-
-The repository includes a [demo page](demo.html) — a long-read article with the core library and overlay add-on running on it. To try it:
-
-1. Build the project (if you haven't already):
-   ```bash
-   bun install && bun run build
-   ```
-2. Open `demo.html` in your browser (just double-click the file or use `open demo.html` on macOS).
-3. Scroll and read the article. The overlay will color-code each paragraph by reading state and show live metrics in a panel at the bottom-right corner. Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> to toggle the overlay on and off.
 
 ## How it works
 
