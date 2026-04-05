@@ -158,6 +158,15 @@ describe('Timer', () => {
       expect(timer.isAtTarget).toBe(true)
     })
 
+    it('targetRatio 0 prevents any advancement', () => {
+      const timer = new Timer(10)
+      timer.targetRatio = 0
+      timer.advance(10)
+      expect(timer.progress).toBe(0)
+      expect(timer.remaining).toBe(10)
+      expect(timer.isAtTarget).toBe(true)
+    })
+
     it('targetRatio 1.0 allows full advancement (backward-compatible)', () => {
       const timer = new Timer(10)
       timer.advance(10)

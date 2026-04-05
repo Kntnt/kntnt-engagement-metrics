@@ -47,6 +47,7 @@ export class Timer {
   }
 
   set targetRatio(value: number) {
+    if (!Number.isFinite(value) || value < 0 || value > 1) return
     this.#targetRatio = value
   }
 
