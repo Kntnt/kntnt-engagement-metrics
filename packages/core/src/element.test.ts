@@ -193,6 +193,7 @@ describe('TrackedElement', () => {
     } as IntersectionObserverEntry)
     expect(el.visibleStart).toBe(0)
     expect(el.visibleEnd).toBe(0)
+    expect(el.computedTargetRatio).toBe(0)
   })
 
   it('updateVisibility handles null rootBounds gracefully', () => {

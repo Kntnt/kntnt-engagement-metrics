@@ -117,5 +117,6 @@ export class TrackedElement {
     // Not visible or degenerate geometry — reset interval
     this.#visibleStart = 0
     this.#visibleEnd = 0
+    this.#computedTargetRatio = this.timer.progress
   }
 }
