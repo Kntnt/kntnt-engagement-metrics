@@ -6,7 +6,7 @@
   <title>How Do You Know If Anyone Actually Reads What You Publish?</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Libre+Franklin:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&family=Mona+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&display=swap" rel="stylesheet">
   <style>
     *,
     *::before,
@@ -25,9 +25,11 @@
       --color-accent-muted: #c4897e;
       --color-rule: #d6cfc5;
       --color-rule-light: #e8e3db;
+      --color-code-bg: #eee9e2;
 
-      --font-serif: 'Cormorant Garamond', 'Georgia', 'Times New Roman', serif;
-      --font-sans: 'Libre Franklin', 'Helvetica Neue', 'Arial', sans-serif;
+      --font-display: 'Instrument Serif', 'Georgia', serif;
+      --font-sans: 'Mona Sans', 'Helvetica Neue', 'Arial', sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
 
       --content-width: 680px;
       --wide-width: 780px;
@@ -43,22 +45,38 @@
     body {
       background-color: var(--color-bg);
       color: var(--color-text);
-      font-family: var(--font-serif);
+      font-family: var(--font-sans);
       font-weight: 400;
       line-height: 1.78;
       min-height: 100vh;
     }
 
-    /* ── Header / Hero ── */
+    /* ── Site header ── */
 
-    .article-header {
+    body > header {
       max-width: var(--wide-width);
       margin: 0 auto;
-      padding: 6rem 1.5rem 3rem;
+      padding: 1.5rem 1.5rem;
+      text-align: center;
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+      border-bottom: 1px solid var(--color-rule-light);
+    }
+
+    /* ── Article header ── */
+
+    article > header {
+      max-width: var(--wide-width);
+      margin: 0 auto;
+      padding: 4rem 1.5rem 3rem;
       text-align: center;
     }
 
-    .article-header::before {
+    article > header::before {
       content: '';
       display: block;
       width: 48px;
@@ -67,10 +85,10 @@
       margin: 0 auto 3rem;
     }
 
-    .article-title {
-      font-family: var(--font-serif);
+    article > header h1 {
+      font-family: var(--font-display);
       font-size: clamp(2.2rem, 5vw, 3.4rem);
-      font-weight: 500;
+      font-weight: 400;
       line-height: 1.18;
       letter-spacing: -0.01em;
       color: var(--color-text);
@@ -80,8 +98,8 @@
       margin-right: auto;
     }
 
-    .article-lead {
-      font-family: var(--font-serif);
+    .standfirst {
+      font-family: var(--font-display);
       font-size: clamp(1.1rem, 2.5vw, 1.3rem);
       font-weight: 400;
       font-style: italic;
@@ -91,16 +109,26 @@
       margin: 0 auto 2.5rem;
     }
 
-    .article-byline {
+    .byline {
       font-family: var(--font-sans);
       font-size: 0.78rem;
       font-weight: 500;
+      font-style: normal;
       letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--color-accent);
     }
 
-    .article-header-rule {
+    .byline a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .byline a:hover {
+      border-bottom: 1px solid var(--color-accent);
+    }
+
+    article > header hr {
       display: block;
       width: 100%;
       max-width: var(--content-width);
@@ -118,18 +146,23 @@
       padding: 0 1.5rem 6rem;
     }
 
+    article > header {
+      max-width: none;
+      padding-left: 0;
+      padding-right: 0;
+    }
+
     article p {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       line-height: 1.82;
       margin-bottom: 1.5rem;
-      font-feature-settings: 'kern' 1, 'liga' 1, 'onum' 1;
-      hanging-punctuation: first allow-end last;
+      font-feature-settings: 'kern' 1, 'liga' 1;
     }
 
     /* Drop cap on first body paragraph */
     article section:first-of-type p:first-of-type::first-letter {
-      font-family: var(--font-serif);
-      font-weight: 600;
+      font-family: var(--font-display);
+      font-weight: 400;
       font-size: 3.8em;
       float: left;
       line-height: 0.78;
@@ -139,9 +172,9 @@
     }
 
     article h2 {
-      font-family: var(--font-serif);
+      font-family: var(--font-sans);
       font-size: clamp(1.5rem, 3.5vw, 2rem);
-      font-weight: 500;
+      font-weight: 600;
       line-height: 1.3;
       color: var(--color-text);
       margin-top: 3.5rem;
@@ -169,16 +202,39 @@
       color: var(--color-text-secondary);
     }
 
-    /* ── Footer ── */
+    /* ── Links ── */
 
-    .article-footer {
+    article a {
+      color: var(--color-accent);
+      text-decoration: none;
+      border-bottom: 1px solid var(--color-accent-muted);
+      transition: border-color 0.2s;
+    }
+
+    article a:hover {
+      border-color: var(--color-accent);
+    }
+
+    /* ── Inline code ── */
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      background: var(--color-code-bg);
+      padding: 0.15em 0.4em;
+      border-radius: 3px;
+    }
+
+    /* ── Site footer ── */
+
+    body > footer {
       max-width: var(--content-width);
       margin: 0 auto;
       padding: 2rem 1.5rem 4rem;
       text-align: center;
     }
 
-    .article-footer::before {
+    body > footer::before {
       content: '';
       display: block;
       width: 48px;
@@ -187,21 +243,21 @@
       margin: 0 auto 2rem;
     }
 
-    .article-footer p {
+    body > footer p {
       font-family: var(--font-sans);
       font-size: 0.8rem;
       color: var(--color-text-secondary);
       line-height: 1.6;
     }
 
-    .article-footer a {
+    body > footer a {
       color: var(--color-accent);
       text-decoration: none;
       border-bottom: 1px solid var(--color-accent-muted);
       transition: border-color 0.2s;
     }
 
-    .article-footer a:hover {
+    body > footer a:hover {
       border-color: var(--color-accent);
     }
 
@@ -212,11 +268,11 @@
         font-size: 16px;
       }
 
-      .article-header {
-        padding: 4rem 1.25rem 2rem;
+      article > header {
+        padding: 3rem 0 2rem;
       }
 
-      .article-header::before {
+      article > header::before {
         margin-bottom: 2rem;
       }
 
@@ -243,144 +299,152 @@
 </head>
 <body>
 
-  <header class="article-header">
-    <h1 class="article-title">How Do You Know If Anyone Actually Reads What You Publish?</h1>
-    <p class="article-lead">Every analytics platform tells you how many people visited a page. None of them tells you how many people read it. The difference matters more than most publishers realise &ndash; and a small open-source library called Kntnt Engagement Metrics sets out to close that gap. Here is how it works, and why it is running on this very page.</p>
-    <p class="article-byline">Thomas Barregren</p>
-    <hr class="article-header-rule">
+  <header>
+    Kntnt Engagement Metrics
   </header>
 
-  <article>
+  <main>
+    <article>
 
-    <section>
-      <h2>What page views actually measure</h2>
+      <header>
+        <h1>How Do You Know If Anyone Actually Reads What You Publish?</h1>
+        <p class="standfirst">Every analytics platform tells you how many people visited a page. None of them tells you how many people read it. The difference matters more than most publishers realise &ndash; and a small open-source library called Kntnt Engagement Metrics sets out to close that gap. Here is how it works, and why it is running on this very page.</p>
+        <address class="byline">
+          <a rel="author" href="https://www.kntnt.se/">Thomas Barregren</a>
+        </address>
+        <hr>
+      </header>
 
-      <p>Web analytics tools &ndash; Google Analytics, Matomo, Adobe Analytics and their many competitors &ndash; are built around a simple event: a page was loaded. From that event they derive page views, unique visitors, sessions, bounce rates and time on page. These numbers are useful for understanding traffic patterns, but they say nothing about what happened after the page appeared on screen.</p>
+      <section>
+        <h2>What page views actually measure</h2>
 
-      <p>Time on page, which might seem like a proxy for reading, is particularly misleading. Most analytics platforms calculate it as the difference between the timestamp of one page view and the next. If a visitor reads an article for eight minutes and then closes the browser, the time on page is recorded as zero &ndash; because there was no subsequent page view to compare against. The metric systematically undercounts engaged readers and overcounts casual visitors who click through to another page quickly.</p>
+        <p>Web analytics tools &ndash; Google Analytics, Matomo, Adobe Analytics and their many competitors &ndash; are built around a simple event: a page was loaded. From that event they derive page views, unique visitors, sessions, bounce rates and time on page. These numbers are useful for understanding traffic patterns, but they say nothing about what happened after the page appeared on screen.</p>
 
-      <p>Bounce rate has a similar problem. A visitor who arrives, reads the entire article carefully, finds exactly what they were looking for and leaves is recorded as a bounce &ndash; indistinguishable from someone who landed on the wrong page and left immediately.</p>
+        <p>Time on page, which might seem like a proxy for reading, is particularly misleading. Most analytics platforms calculate it as the difference between the timestamp of one page view and the next. If a visitor reads an article for eight minutes and then closes the browser, the time on page is recorded as zero &ndash; because there was no subsequent page view to compare against. The metric systematically undercounts engaged readers and overcounts casual visitors who click through to another page quickly.</p>
 
-      <p>The result is a measurement system that conflates attention with presence. Being on a page is not the same as reading it.</p>
-    </section>
+        <p>Bounce rate has a similar problem. A visitor who arrives, reads the entire article carefully, finds exactly what they were looking for and leaves is recorded as a bounce &ndash; indistinguishable from someone who landed on the wrong page and left immediately.</p>
 
-    <section>
-      <h2>Scroll depth: a step in the right direction</h2>
+        <p>The result is a measurement system that conflates attention with presence. Being on a page is not the same as reading it.</p>
+      </section>
 
-      <p>The industry&rsquo;s most common attempt to get closer to actual engagement is scroll depth tracking. The idea is straightforward: if a visitor scrolls to the bottom of the page, they probably read it. Many analytics setups fire events at 25&nbsp;%, 50&nbsp;%, 75&nbsp;% and 100&nbsp;% scroll depth.</p>
+      <section>
+        <h2>Scroll depth: a step in the right direction</h2>
 
-      <p>This is better than page views alone, but it has an obvious limitation. Scrolling and reading are different activities. A visitor can flick to the bottom of a 3,000-word article in two seconds without reading a single paragraph. Conversely, someone reading a short article that fits entirely above the fold never scrolls at all &ndash; yet they may read every word.</p>
+        <p>The industry&rsquo;s most common attempt to get closer to actual engagement is scroll depth tracking. The idea is straightforward: if a visitor scrolls to the bottom of the page, they probably read it. Many analytics setups fire events at 25&nbsp;%, 50&nbsp;%, 75&nbsp;% and 100&nbsp;% scroll depth.</p>
 
-      <p>Scroll depth measures movement through a page. It does not measure attention to the content on that page. The two happen to correlate in some cases, but the correlation is weak enough to be unreliable for editorial decisions.</p>
+        <p>This is better than page views alone, but it has an obvious limitation. Scrolling and reading are different activities. A visitor can flick to the bottom of a 3,000-word article in two seconds without reading a single paragraph. Conversely, someone reading a short article that fits entirely above the fold never scrolls at all &ndash; yet they may read every word.</p>
 
-      <p>Some tools have tried to improve on scroll depth by combining it with time. The logic goes: if a visitor reaches 75&nbsp;% scroll depth and spends more than 60 seconds on the page, they are probably a reader. These heuristics get closer to the truth, but they are still guessing. A visitor who scrolls to 75&nbsp;% and then walks away from the computer for two minutes looks identical to a careful reader. There is no way to distinguish the two with scroll data and timestamps alone.</p>
+        <p>Scroll depth measures movement through a page. It does not measure attention to the content on that page. The two happen to correlate in some cases, but the correlation is weak enough to be unreliable for editorial decisions.</p>
 
-      <p>What would be needed is a way to observe which parts of the page the visitor actually pauses on &ndash; and for how long. In an ideal world, you would track the visitor&rsquo;s eye movements. In practice, that requires specialised hardware and explicit consent, which rules it out for general web analytics.</p>
-    </section>
+        <p>Some tools have tried to improve on scroll depth by combining it with time. The logic goes: if a visitor reaches 75&nbsp;% scroll depth and spends more than 60 seconds on the page, they are probably a reader. These heuristics get closer to the truth, but they are still guessing. A visitor who scrolls to 75&nbsp;% and then walks away from the computer for two minutes looks identical to a careful reader. There is no way to distinguish the two with scroll data and timestamps alone.</p>
 
-    <section>
-      <h2>A different approach: timing what is visible</h2>
+        <p>What would be needed is a way to observe which parts of the page the visitor actually pauses on &ndash; and for how long. In an ideal world, you would track the visitor&rsquo;s eye movements. In practice, that requires specialised hardware and explicit consent, which rules it out for general web analytics.</p>
+      </section>
 
-      <p>Kntnt Engagement Metrics takes a different path. Rather than measuring where the visitor scrolls or how long they stay, it measures how long each piece of content remains visible in the browser viewport &ndash; and whether the visitor is actually pausing to look at it.</p>
+      <section>
+        <h2>A different approach: timing what is visible</h2>
 
-      <p>The core idea rests on a reasonable assumption: if a paragraph is fully visible on screen and the visitor is not scrolling, there is a good chance they are reading it. The longer the paragraph remains visible and stationary, the higher the probability. This is not a certainty &ndash; someone might stare out of the window while a paragraph sits on screen &ndash; but it is the closest approximation available without eye-tracking hardware.</p>
+        <p>Kntnt Engagement Metrics takes a different path. Rather than measuring where the visitor scrolls or how long they stay, it measures how long each piece of content remains visible in the browser viewport &ndash; and whether the visitor is actually pausing to look at it.</p>
 
-      <p>The library assigns each content element (by default, every &lt;p&gt; tag on the page) an estimated reading time based on its character count and a configurable reading speed (the default is 863 characters per minute, a figure derived from research on average screen-reading speed). It then starts a countdown timer for each element. The timer advances only when two conditions are met: the element is visible in the viewport, and the visitor is not actively scrolling.</p>
+        <p>The core idea rests on a reasonable assumption: if a paragraph is fully visible on screen and the visitor is not scrolling, there is a good chance they are reading it. The longer the paragraph remains visible and stationary, the higher the probability. This is not a certainty &ndash; someone might stare out of the window while a paragraph sits on screen &ndash; but it is the closest approximation available without eye-tracking hardware.</p>
 
-      <p>Partial visibility counts proportionally. If half of a paragraph is visible, its timer advances at half speed. If the visitor scrolls, all timers pause immediately. They resume after a brief cooldown period &ndash; 500 milliseconds by default &ndash; once the scrolling stops. If the visitor switches to a different browser tab, all timers pause until the tab becomes visible again.</p>
+        <p>The library assigns each content element (by default, every <code>&lt;p&gt;</code> tag on the page) an estimated reading time based on its character count and a configurable reading speed (the default is 882 characters per minute, a figure derived from research on average reading speed). It then starts a countdown timer for each element. The timer advances only when two conditions are met: the element is visible in the viewport, and the visitor is not actively scrolling.</p>
 
-      <p>From these per-element timers, the library computes two aggregate metrics on a continuous scale from 0 to 1. The reading ratio represents the fraction of the page&rsquo;s text content that has been &lsquo;read&rsquo; &ndash; that is, visible and stationary for long enough to plausibly have been consumed. The scanning ratio represents how far down the page the visitor has scrolled. Together, these two numbers paint a far more detailed picture than page views, bounce rate or scroll depth alone.</p>
+        <p>Partial visibility counts proportionally. If half of a paragraph is visible, its timer advances at half speed. If the visitor scrolls, all timers pause immediately. They resume after a brief cooldown period &ndash; 500 milliseconds by default &ndash; once the scrolling stops. If the visitor switches to a different browser tab, all timers pause until the tab becomes visible again.</p>
 
-      <p>A reading ratio of 0.02 and a scanning ratio of 0.95 means the visitor scrolled through nearly the entire page without pausing. A reading ratio of 0.85 and a scanning ratio of 0.90 means they read most of the content carefully. A reading ratio of 0.45 and a scanning ratio of 0.50 means they read the first half and left. Each of these patterns is invisible to traditional analytics but clearly distinguishable with engagement metrics.</p>
-    </section>
+        <p>From these per-element timers, the library computes two aggregate metrics on a continuous scale from 0 to 1. The reading ratio represents the fraction of the page&rsquo;s text content that has been &lsquo;read&rsquo; &ndash; that is, visible and stationary for long enough to plausibly have been consumed. The scanning ratio represents how far down the page the visitor has scrolled. Together, these two numbers paint a far more detailed picture than page views, bounce rate or scroll depth alone.</p>
 
-    <section>
-      <h2>Connecting to analytics platforms</h2>
+        <p>A reading ratio of 0.02 and a scanning ratio of 0.95 means the visitor scrolled through nearly the entire page without pausing. A reading ratio of 0.85 and a scanning ratio of 0.90 means they read most of the content carefully. A reading ratio of 0.45 and a scanning ratio of 0.50 means they read the first half and left. Each of these patterns is invisible to traditional analytics but clearly distinguishable with engagement metrics.</p>
+      </section>
 
-      <p>Measuring engagement in the browser is only half the problem. The data also needs to reach whatever analytics system the publisher uses, so it can be analysed alongside traffic data, conversion events and other metrics.</p>
+      <section>
+        <h2>Connecting to analytics platforms</h2>
 
-      <p>Kntnt Engagement Metrics handles this through a listener interface. The core library emits a metrics snapshot on every measurement tick &ndash; roughly five times per second. Any piece of code that implements a simple update method can subscribe to these snapshots and do whatever it wants with the data.</p>
+        <p>Measuring engagement in the browser is only half the problem. The data also needs to reach whatever analytics system the publisher uses, so it can be analysed alongside traffic data, conversion events and other metrics.</p>
 
-      <p>The project ships with two ready-made listeners as separate packages: one for Matomo and one for Google Analytics 4 (GA4). Both follow the same pattern. They define a set of thresholds &ndash; for example, reading progress at 10&nbsp;%, 25&nbsp;%, 50&nbsp;%, 75&nbsp;% and 100&nbsp;% &ndash; and fire an analytics event the first time each threshold is crossed. This prevents the analytics platform from being flooded with events on every tick while still capturing the progression of the visitor&rsquo;s engagement.</p>
+        <p>Kntnt Engagement Metrics handles this through a listener interface. The core library emits a metrics snapshot on every measurement tick &ndash; roughly five times per second. Any piece of code that implements a simple <code>update</code> method can subscribe to these snapshots and do whatever it wants with the data.</p>
 
-      <p>The Matomo add-on pushes events via Matomo&rsquo;s _paq array and can optionally set custom dimension values for reading ratio, scanning ratio and reading time. The GA4 add-on calls gtag() with custom event names. Both auto-detect whether their respective analytics tracker is present on the page and log a warning to the browser console if it is not &ndash; without throwing errors or breaking anything.</p>
+        <p>The project ships with two ready-made listeners as separate packages: one for Matomo and one for Google Analytics 4 (GA4). Both follow the same pattern. They define a set of thresholds &ndash; for example, reading progress at 10&nbsp;%, 25&nbsp;%, 50&nbsp;%, 75&nbsp;% and 100&nbsp;% &ndash; and fire an analytics event the first time each threshold is crossed. This prevents the analytics platform from being flooded with events on every tick while still capturing the progression of the visitor&rsquo;s engagement.</p>
 
-      <p>Because the listener interface is open, building an integration for a different analytics platform is a matter of writing a small class that receives metrics snapshots and translates them into the appropriate API calls. The core library does not need to know or care which analytics system is on the other end.</p>
-    </section>
+        <p>The Matomo add-on pushes events via Matomo&rsquo;s <code>_paq</code> array and can optionally set custom dimension values for reading ratio, scanning ratio and reading time. The GA4 add-on calls <code>gtag()</code> with custom event names. Both auto-detect whether their respective analytics tracker is present on the page and log a warning to the browser console if it is not &ndash; without throwing errors or breaking anything.</p>
 
-    <section>
-      <h2>The overlay: seeing engagement in real time</h2>
+        <p>Because the listener interface is open, building an integration for a different analytics platform is a matter of writing a small class that receives metrics snapshots and translates them into the appropriate API calls. The core library does not need to know or care which analytics system is on the other end.</p>
+      </section>
 
-      <p>The page you are reading right now does not use Matomo or Google Analytics. Instead, it uses a third add-on called the overlay, which visualises the measurement process directly in the browser.</p>
+      <section>
+        <h2>The overlay: seeing engagement in real time</h2>
 
-      <p>The overlay serves two purposes. It is a demonstration tool &ndash; a way to see the library in action and verify that its assumptions about reading behaviour are reasonable. And it is a testing tool &ndash; useful during development for calibrating the reading speed parameter and checking that the measurement algorithm behaves as expected on different page layouts.</p>
+        <p>The page you are reading right now does not use Matomo or Google Analytics. Instead, it uses a third add-on called the overlay, which visualises the measurement process directly in the browser.</p>
 
-      <p>When the overlay is active, each tracked paragraph on the page gets a coloured outline. Blue means the element has not yet been scrolled into view. Gold, with a gradient showing progress, means the element is currently visible and its reading timer is advancing. Red means the element was previously visible but has scrolled out of view before being fully &lsquo;read&rsquo;. Green means the timer has completed &ndash; the element has been visible and stationary for long enough to count as read.</p>
+        <p>The overlay serves two purposes. It is a demonstration tool &ndash; a way to see the library in action and verify that its assumptions about reading behaviour are reasonable. And it is a testing tool &ndash; useful during development for calibrating the reading speed parameter and checking that the measurement algorithm behaves as expected on different page layouts.</p>
 
-      <p>In one corner of the screen, a small panel displays live metrics: reading percentage, scanning percentage, the number of elements in each state, and an interactive reading speed control. The speed control is a slider and number input that adjusts the assumed reading speed in real time. Move it up, and the timers require less time per element; move it down, and they require more. Because the timers preserve their current progress when recalibrated, the effect is immediate and smooth &ndash; there is no reset.</p>
+        <p>When the overlay is active, each tracked paragraph on the page gets a coloured outline. Blue means the element has not yet been scrolled into view. Gold, with a gradient showing progress, means the element is currently visible and its reading timer is advancing. Red means the element was previously visible but has scrolled out of view before being fully &lsquo;read&rsquo;. Green means the timer has completed &ndash; the element has been visible and stationary for long enough to count as read.</p>
 
-      <p>The overlay panel uses Shadow DOM, which means its styles are completely isolated from the rest of the page. It cannot be affected by the page&rsquo;s CSS, and it cannot affect the page&rsquo;s layout. Pressing Ctrl+Shift+D (configurable) toggles the overlay on and off.</p>
+        <p>In one corner of the screen, a small panel displays live metrics: reading percentage, scanning percentage, the number of elements in each state, and an interactive reading speed control. The speed control is a slider and number input that adjusts the assumed reading speed in real time. Move it up, and the timers require less time per element; move it down, and they require more. Because the timers preserve their current progress when recalibrated, the effect is immediate and smooth &ndash; there is no reset.</p>
 
-      <p>Try scrolling this page at different speeds and watch the colours change. Pause on a paragraph and observe the gold gradient creeping forward. Switch to another tab and come back &ndash; the timers will have paused while you were away. This is the measurement algorithm made visible.</p>
-    </section>
+        <p>The overlay panel uses Shadow DOM, which means its styles are completely isolated from the rest of the page. It cannot be affected by the page&rsquo;s CSS, and it cannot affect the page&rsquo;s layout. Pressing <code>Ctrl+Shift+D</code> (configurable) toggles the overlay on and off.</p>
 
-    <section>
-      <h2>Why the library loads fast</h2>
+        <p>Try scrolling this page at different speeds and watch the colours change. Pause on a paragraph and observe the gold gradient creeping forward. Switch to another tab and come back &ndash; the timers will have paused while you were away. This is the measurement algorithm made visible.</p>
+      </section>
 
-      <p>Web performance is a constant concern for publishers. Every additional script competes for bandwidth and processing time, and visitors on slow connections or older devices feel the impact most.</p>
+      <section>
+        <h2>Why the library loads fast</h2>
 
-      <p>The core library is 4.7 KB minified &ndash; small enough to load in a single TCP round trip on most connections. The overlay add-on, which includes all its CSS and HTML generation code, adds 6.8 KB. The Matomo and GA4 add-ons are 1.2 KB and 1.4 KB respectively. A typical production deployment &ndash; the core plus one analytics add-on &ndash; weighs under 6 KB. For comparison, a single medium-resolution JPEG image on most web pages is ten to fifty times that size.</p>
+        <p>Web performance is a constant concern for publishers. Every additional script competes for bandwidth and processing time, and visitors on slow connections or older devices feel the impact most.</p>
 
-      <p>This small footprint is a direct consequence of a strict design rule: the core library has zero runtime dependencies. No utility libraries, no framework code, no polyfills. Every byte in the bundle is code that the library itself needs.</p>
-    </section>
+        <p>The core library is 4.7 KB minified &ndash; small enough to load in a single TCP round trip on most connections. The overlay add-on, which includes all its CSS and HTML generation code, adds 6.8 KB. The Matomo and GA4 add-ons are 1.2 KB and 1.4 KB respectively. A typical production deployment &ndash; the core plus one analytics add-on &ndash; weighs under 6 KB. For comparison, a single medium-resolution JPEG image on most web pages is ten to fifty times that size.</p>
 
-    <section>
-      <h2>Why it will not slow down the page</h2>
+        <p>This small footprint is a direct consequence of a strict design rule: the core library has zero runtime dependencies. No utility libraries, no framework code, no polyfills. Every byte in the bundle is code that the library itself needs.</p>
+      </section>
 
-      <p>Size is only one dimension of performance. A small script that monopolises the browser&rsquo;s main thread can still degrade the user experience. Kntnt Engagement Metrics is designed to avoid this.</p>
+      <section>
+        <h2>Why it will not slow down the page</h2>
 
-      <p>The measurement loop runs on requestAnimationFrame, throttled to one tick every 200 milliseconds. Each tick does the minimum possible work: a single pass through the tracked elements, advancing timers with basic arithmetic. No DOM reads happen during the tick. The browser&rsquo;s own compositor thread handles visibility detection through the IntersectionObserver API, which is vastly more efficient than polling element positions with getBoundingClientRect() on every frame.</p>
+        <p>Size is only one dimension of performance. A small script that monopolises the browser&rsquo;s main thread can still degrade the user experience. Kntnt Engagement Metrics is designed to avoid this.</p>
 
-      <p>All scroll and touch event listeners are registered with the { passive: true } flag. This tells the browser that the listener will not call preventDefault(), allowing the browser to handle scrolling on a separate thread without waiting for JavaScript to respond. The practical effect is that the library cannot introduce scroll jank &ndash; the stuttering, laggy scrolling that some poorly written tracking scripts cause.</p>
+        <p>The measurement loop runs on <code>requestAnimationFrame</code>, throttled to one tick every 200 milliseconds. Each tick does the minimum possible work: a single pass through the tracked elements, advancing timers with basic arithmetic. No DOM reads happen during the tick. The browser&rsquo;s own compositor thread handles visibility detection through the <code>IntersectionObserver</code> API, which is vastly more efficient than polling element positions with <code>getBoundingClientRect()</code> on every frame.</p>
 
-      <p>When the browser tab is hidden, requestAnimationFrame is automatically suspended by the browser itself, and the library&rsquo;s visibility handler pauses all timers. No CPU cycles are spent on a tab the visitor is not looking at.</p>
-    </section>
+        <p>All scroll and touch event listeners are registered with the <code>{ passive: true }</code> flag. This tells the browser that the listener will not call <code>preventDefault()</code>, allowing the browser to handle scrolling on a separate thread without waiting for JavaScript to respond. The practical effect is that the library cannot introduce scroll jank &ndash; the stuttering, laggy scrolling that some poorly written tracking scripts cause.</p>
 
-    <section>
-      <h2>Why it will not break anything</h2>
+        <p>When the browser tab is hidden, <code>requestAnimationFrame</code> is automatically suspended by the browser itself, and the library&rsquo;s visibility handler pauses all timers. No CPU cycles are spent on a tab the visitor is not looking at.</p>
+      </section>
 
-      <p>A tracking library that crashes the page or interferes with other scripts is worse than no tracking at all. Kntnt Engagement Metrics takes several precautions to ensure it stays contained.</p>
+      <section>
+        <h2>Why it will not break anything</h2>
 
-      <p>Every call to a registered listener is wrapped in a try/catch block. If an analytics add-on throws an error &ndash; perhaps because the analytics platform&rsquo;s script failed to load &ndash; the error is caught, logged to the console as a warning, and the remaining listeners continue to receive updates. A broken add-on cannot take down the core measurement loop, and a broken measurement loop cannot take down the page.</p>
+        <p>A tracking library that crashes the page or interferes with other scripts is worse than no tracking at all. Kntnt Engagement Metrics takes several precautions to ensure it stays contained.</p>
 
-      <p>Invalid CSS selectors passed to the configuration are caught and handled with a warning rather than an exception. Missing analytics trackers (a page where Matomo or gtag.js is not loaded) produce a console warning, not a crash. The library treats every external dependency &ndash; the DOM, the analytics platform, the add-ons &ndash; as potentially unreliable and handles failures gracefully.</p>
+        <p>Every call to a registered listener is wrapped in a <code>try/catch</code> block. If an analytics add-on throws an error &ndash; perhaps because the analytics platform&rsquo;s script failed to load &ndash; the error is caught, logged to the console as a warning, and the remaining listeners continue to receive updates. A broken add-on cannot take down the core measurement loop, and a broken measurement loop cannot take down the page.</p>
 
-      <p>The overlay&rsquo;s user interface is rendered inside a Shadow DOM boundary, which provides complete style isolation in both directions. The page&rsquo;s CSS cannot leak into the overlay, and the overlay&rsquo;s CSS cannot affect the page. This eliminates an entire category of visual bugs that can occur when injecting UI elements into arbitrary web pages.</p>
+        <p>Invalid CSS selectors passed to the configuration are caught and handled with a warning rather than an exception. Missing analytics trackers (a page where Matomo or <code>gtag.js</code> is not loaded) produce a console warning, not a crash. The library treats every external dependency &ndash; the DOM, the analytics platform, the add-ons &ndash; as potentially unreliable and handles failures gracefully.</p>
 
-      <p>Private class fields (using JavaScript&rsquo;s native # syntax rather than TypeScript&rsquo;s private keyword) ensure that the library&rsquo;s internal state cannot be accidentally modified by other scripts on the page. The public API surface is deliberately small: a handful of methods on the measurer object, and that is all.</p>
-    </section>
+        <p>The overlay&rsquo;s user interface is rendered inside a Shadow DOM boundary, which provides complete style isolation in both directions. The page&rsquo;s CSS cannot leak into the overlay, and the overlay&rsquo;s CSS cannot affect the page. This eliminates an entire category of visual bugs that can occur when injecting UI elements into arbitrary web pages.</p>
 
-    <section>
-      <h2>Why it is not a security risk</h2>
+        <p>Private class fields (using JavaScript&rsquo;s native <code>#</code> syntax rather than TypeScript&rsquo;s <code>private</code> keyword) ensure that the library&rsquo;s internal state cannot be accidentally modified by other scripts on the page. The public API surface is deliberately small: a handful of methods on the measurer object, and that is all.</p>
+      </section>
 
-      <p>The library runs entirely in the visitor&rsquo;s browser. It does not send data to any server on its own &ndash; that is the job of whichever analytics add-on is configured, using the analytics platform&rsquo;s own established channels. The core library makes no network requests of any kind.</p>
+      <section>
+        <h2>Why it is not a security risk</h2>
 
-      <p>It does not read cookies, access localStorage, collect personal information, or fingerprint the browser. It observes two things: which content elements are visible in the viewport, and whether the page is being scrolled. These are the same observations that any IntersectionObserver-based lazy-loading image script makes.</p>
+        <p>The library runs entirely in the visitor&rsquo;s browser. It does not send data to any server on its own &ndash; that is the job of whichever analytics add-on is configured, using the analytics platform&rsquo;s own established channels. The core library makes no network requests of any kind.</p>
 
-      <p>The source code is published under the MIT licence by Kntnt Sweden AB. MIT is one of the most permissive open-source licences: anyone can use, modify and redistribute the code, including in commercial products, with no obligation beyond preserving the copyright notice. The full source &ndash; TypeScript, tests, build configuration, documentation &ndash; is available for inspection on GitHub.</p>
-    </section>
+        <p>It does not read cookies, access <code>localStorage</code>, collect personal information, or fingerprint the browser. It observes two things: which content elements are visible in the viewport, and whether the page is being scrolled. These are the same observations that any <code>IntersectionObserver</code>-based lazy-loading image script makes.</p>
 
-    <section>
-      <h2>Where to find it</h2>
+        <p>The source code is published under the MIT licence by Kntnt Sweden AB. MIT is one of the most permissive open-source licences: anyone can use, modify and redistribute the code, including in commercial products, with no obligation beyond preserving the copyright notice. The full source &ndash; TypeScript, tests, build configuration, documentation &ndash; is available for inspection on GitHub.</p>
+      </section>
 
-      <p>The source code, documentation and issue tracker are at github.com/Kntnt/kntnt-engagement-metrics. The repository includes detailed technical specifications covering the measurement algorithm, the public API, coding conventions, the add-on development guide and the testing strategy. The packages will be published on npm under the @kntnt scope once the library reaches its first stable release.</p>
+      <section>
+        <h2>Where to find it</h2>
 
-      <p>Anyone who publishes content on the web and wants to understand whether that content is being read &ndash; not just visited &ndash; now has a tool that attempts to answer that question as honestly as the constraints of a web browser allow. It is small, it is fast, it is cautious, and it shows its working. The overlay on this page is the proof.</p>
-    </section>
+        <p>The source code, documentation and issue tracker are at <a href="https://github.com/Kntnt/kntnt-engagement-metrics">github.com/Kntnt/kntnt-engagement-metrics</a>. The repository includes detailed technical specifications covering the measurement algorithm, the public API, coding conventions, the add-on development guide and the testing strategy. The packages will be published on npm under the <code>@kntnt</code> scope once the library reaches its first stable release.</p>
 
-  </article>
+        <p>Anyone who publishes content on the web and wants to understand whether that content is being read &ndash; not just visited &ndash; now has a tool that attempts to answer that question as honestly as the constraints of a web browser allow. It is small, it is fast, it is cautious, and it shows its working. The overlay on this page is the proof.</p>
+      </section>
 
-  <footer class="article-footer">
+    </article>
+  </main>
+
+  <footer>
     <p>Built with <a href="https://github.com/Kntnt/kntnt-engagement-metrics">Kntnt Engagement Metrics</a> &middot; MIT Licence &middot; Kntnt Sweden AB</p>
   </footer>
 
