@@ -80,7 +80,9 @@ After each tick, the library computes a snapshot of aggregate metrics from all t
 
 ### When events reach your analytics
 
-The metrics snapshot is passed to all registered add-ons on every tick. The analytics add-ons (Matomo, Google Analytics) do not send an event on every tick — that would flood your analytics platform. Instead, they use configurable thresholds. Matomo fires reading events at 10%, 20%, 30%, … 100% by default; GA4 fires at 10%, 25%, 50%, 75%, 90%, and 100%.
+The metrics snapshot is passed to all registered add-ons on every tick. The analytics add-ons (Matomo, Google Analytics) do not send an event on every tick — that would flood your analytics platform. Instead, they use configurable thresholds. By default, the Matomo add-on fires reading events at every ten percentage points (10%, 20%, 30%, … 100%), while the GA4 add-on uses a sparser set (10%, 25%, 50%, 75%, 90%, and 100%). Both use the same default scanning thresholds: 25%, 50%, 75%, and 100%.
+
+The defaults differ because the platforms have different constraints. A self-hosted Matomo instance has no event quotas and no sampling, so more granular reporting is simply better. GA4's free tier applies sampling at high event volumes, enforces daily event quotas, and limits the number of custom dimensions per property — fewer thresholds reduce the risk of hitting those limits. Both sets of thresholds are configurable; these are defaults for sites that do not specify their own.
 
 When the reading ratio first crosses a threshold, the add-on fires a single event to your analytics platform — for example, "this visitor has read 25% of the content". Each threshold fires exactly once; subsequent ticks that remain above it do not trigger another event. A fully engaged reader generates a handful of reading events and a few scanning events for the entire page visit.
 
@@ -111,13 +113,13 @@ The core also provides the API that add-on packages build on. Add-ons implement 
 
 The Matomo add-on translates engagement metrics into Matomo tracking events. It registers as a listener on the core measurer and, on each tick, checks whether any reporting threshold has been crossed. When a threshold is reached, it sends a single event via Matomo's standard `_paq.push()` API.
 
-By default, reading events fire at 10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%, 90%, and 100%. Scanning events fire at 25%, 50%, 75%, and 100%. Each threshold fires exactly once per page visit. The add-on also supports Matomo custom dimensions for reading ratio, scanning ratio, and reading time.
+By default, reading events fire at 10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%, 90%, and 100%. Scanning events fire at 25%, 50%, 75%, and 100%. These thresholds are configurable — the defaults are intentionally granular because a self-hosted Matomo instance has no event quotas or sampling limits. Each threshold fires exactly once per page visit. The add-on also supports Matomo custom dimensions for reading ratio, scanning ratio, and reading time.
 
 ### Google Analytics 4 package
 
 The GA4 add-on works the same way as the Matomo add-on, but sends events via the `gtag()` function that Google Analytics 4 uses. Reading events are sent as `engagement_reading` and scanning events as `engagement_scanning` (both names are configurable).
 
-By default, reading events fire at 10%, 25%, 50%, 75%, 90%, and 100%. Scanning events fire at 25%, 50%, 75%, and 100%. Each event includes the threshold percentage, elapsed reading time, and current ratio as event parameters.
+By default, reading events fire at 10%, 25%, 50%, 75%, 90%, and 100%. Scanning events fire at 25%, 50%, 75%, and 100%. These thresholds are configurable — the defaults are sparser than Matomo's because GA4's free tier applies sampling at high event volumes, enforces daily event quotas, and limits the number of custom dimensions per property. Each event includes the threshold percentage, elapsed reading time, and current ratio as event parameters.
 
 ### Overlay package
 
