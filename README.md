@@ -232,6 +232,47 @@ How far down the page the visitor has scrolled, expressed as a number between 0 
 
 Comparing scanning ratio with reading ratio reveals visitor behaviour: a high scanning ratio with a low reading ratio indicates fast scrolling without reading; similar values for both suggest steady, engaged reading.
 
+## Viewing engagement data in your analytics platform
+
+The add-ons send events automatically once installed. This section explains what arrives in your analytics platform and where to find it.
+
+### Matomo
+
+No configuration is needed. Events appear in your Matomo dashboard as soon as visitors start triggering thresholds.
+
+The add-on sends standard Matomo tracking events with this structure:
+
+| Field | Reading events | Scanning events |
+|-------|---------------|-----------------|
+| Category | `Engagement` | `Engagement` |
+| Action | `Reading` | `Scanning` |
+| Name | Threshold reached, e.g. `50%` | Threshold reached, e.g. `75%` |
+| Value | Elapsed reading time (seconds) | Scanning depth (pixels) |
+
+To find the data, go to **Behaviour > Events** in the Matomo dashboard and filter by the category `Engagement`. The Action column separates reading events from scanning events, and the Name column shows which threshold was crossed.
+
+From there you can build segments (for example, visitors whose reading ratio reached at least 50%) or create custom reports that combine engagement data with other dimensions such as traffic source or landing page.
+
+### Google Analytics 4
+
+Events arrive in GA4 immediately, but you need one extra step to make the event parameters available in reports.
+
+The add-on sends two custom event types:
+
+| Event name | Parameters |
+|------------|------------|
+| `engagement_reading` | `percentage`, `reading_time`, `reading_ratio` |
+| `engagement_scanning` | `percentage`, `scanning_depth`, `scanning_ratio` |
+
+GA4 collects the events automatically, but by default it does not include custom parameters in standard reports. To unlock them, register each parameter as a custom dimension:
+
+1. In your GA4 property, go to **Admin > Custom definitions > Custom dimensions**.
+2. Click **Create custom dimension**.
+3. Set the scope to **Event** and enter the parameter name exactly as shown above (e.g. `percentage`, `reading_time`).
+4. Repeat for each parameter you want to use in reports.
+
+Once the dimensions are registered, you can find the data under **Reports > Engagement > Events**, filtered by event name. For more flexible analysis, use **Explore** to build free-form reports that combine engagement parameters with other dimensions such as page path, source/medium, or device category.
+
 ## Build and install
 
 The packages are not yet published to npm or a CDN. To use them, you build the JavaScript files yourself using [Bun](https://bun.sh/) — a fast JavaScript toolkit similar to Node.js.
