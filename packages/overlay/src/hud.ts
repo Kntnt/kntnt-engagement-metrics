@@ -190,7 +190,7 @@ export class HudPanel {
       min: 50,
       max: 5000,
       step: 50,
-      value: 882,
+      value: 1380,
       onChange: (val) => this.#measurer.setReadingSpeed(val),
     })
     controlsSection.appendChild(speedControl.row)

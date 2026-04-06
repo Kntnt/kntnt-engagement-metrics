@@ -45,7 +45,7 @@ The remaining elements form the content that will be measured, in the order they
 
 ### A countdown timer for each element
 
-Each element gets its own countdown timer. The timer's duration is calculated from the element's character count and the configured reading speed (default: 882 characters per minute). A paragraph with 441 characters, for example, gets a 30-second timer. This represents the library's estimate of how long an average reader needs to read that particular element.
+Each element gets its own countdown timer. The timer's duration is calculated from the element's character count and the configured reading speed (default: 1 380 characters per minute). A paragraph with 690 characters, for example, gets a 30-second timer. This represents the library's estimate of how long an average reader needs to read that particular element.
 
 ### Watching what is on screen
 
@@ -143,7 +143,7 @@ All options are optional. The defaults work well for most sites.
 |--------|---------|-------------|
 | `selector` | `'p'` | CSS selector for content elements |
 | `exclude` | `''` | CSS selector for elements to exclude |
-| `readingSpeed` | `882` | Average reading speed in characters per minute |
+| `readingSpeed` | `1380` | Average reading speed in characters per minute |
 | `tickInterval` | `200` | Milliseconds between measurement ticks |
 | `observerThresholds` | `[0, 0.25, 0.5, 0.75, 1.0]` | Visibility ratios that trigger observer callbacks |
 | `scrollSpeedThreshold` | `200` | Minimum scroll speed (px/sec) to count as scrolling |
@@ -161,9 +161,9 @@ When left empty (the default), no elements are excluded.
 
 ### Reading speed
 
-The average reading speed in characters per minute. The library uses this to calculate how long a reader needs for each element: an element with 882 characters gets a 60-second timer at the default speed.
+The average reading speed in characters per minute. The library uses this to calculate how long a reader needs for each element: an element with 1 380 characters gets a 60-second timer at the default speed.
 
-The default of 882 characters per minute comes from the International Reading Speed Texts (IReST) project, which measured reading speeds across 17 languages. The mean across 14 of those languages was 882 cpm, with speeds ranging from 65 to 71 milliseconds per character at a 95% confidence interval (Trauzettel-Klosinski S, Dietz K; IReST Study Group, "[Standardized Assessment of Reading Performance: The New International Reading Speed Texts IReST](https://doi.org/10.1167/iovs.11-8284)", *Invest Ophthalmol Vis Sci.* 2012;53(9):5452–5461).
+Research shows that readers of text written with the Latin alphabet typically spend between 42 and 45 milliseconds per character, regardless of language and text difficulty. That translates to roughly 1 330–1 430 characters per minute. The default of 1 380 characters per minute is the midpoint of that range.
 
 You can change the reading speed at runtime via `measurer.setReadingSpeed()`, which recalibrates all timers while preserving current progress. The scroll speed threshold and scroll cooldown are also adjustable at runtime via `measurer.setScrollSpeedThreshold()` and `measurer.setScrollCooldown()`.
 
@@ -345,7 +345,7 @@ import { registerGtag } from '@kntnt/engagement-metrics-gtag'
 
 const measurer = createMeasurer({
   selector: 'p',     // measure all <p> elements
-  readingSpeed: 882, // characters per minute
+  readingSpeed: 1380, // characters per minute
 })
 
 registerGtag(measurer, {
@@ -380,7 +380,7 @@ The packages are not yet published to npm or a CDN. To use them, you build the f
 <script>
   const measurer = KntntEngagementMetrics.start({
     selector: 'article p',
-    readingSpeed: 882,
+    readingSpeed: 1380,
   })
   KntntEngagementMetrics.measurer = measurer
   KntntEngagementMetrics.gtag.register()

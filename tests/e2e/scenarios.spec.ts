@@ -3,7 +3,7 @@ import { expect, type Page, test } from '@playwright/test'
 /**
  * Default reading speed (chars/min) matching the measurer default.
  */
-const READING_SPEED = 882
+const READING_SPEED = 1380
 
 interface EngagementMetrics {
   readingTime: number
@@ -122,7 +122,7 @@ test.describe('Overlay scenario', () => {
       const ns = (window as unknown as Record<string, unknown>).KntntEngagementMetrics as {
         measurer: { setReadingSpeed(s: number): void }
       }
-      ns.measurer.setReadingSpeed(882 * 2)
+      ns.measurer.setReadingSpeed(1380 * 2)
     })
 
     const contentTimeAfter = await page.evaluate(() => {

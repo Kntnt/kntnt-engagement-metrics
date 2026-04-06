@@ -19,7 +19,7 @@ function mockEntry(
   return { target, intersectionRatio, isIntersecting } as IntersectionObserverEntry
 }
 
-const READING_SPEED = 882 // chars per minute (default)
+const READING_SPEED = 1380 // chars per minute (default)
 
 describe('TrackedElement', () => {
   it('charCount reflects the text content length', () => {
@@ -87,8 +87,8 @@ describe('TrackedElement', () => {
   })
 
   it('calculates correct timer duration from text length and reading speed', () => {
-    // 882 chars at 882 chars/min = 1 minute = 60 seconds
-    const text = 'x'.repeat(882)
+    // 1380 chars at 1380 chars/min = 1 minute = 60 seconds
+    const text = 'x'.repeat(1380)
     const el = new TrackedElement(mockElement(text), READING_SPEED)
     expect(el.timer.initialDuration).toBeCloseTo(60)
   })

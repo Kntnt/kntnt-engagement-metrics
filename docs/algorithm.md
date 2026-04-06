@@ -14,7 +14,7 @@ Estimate how much of a page's text content a visitor actually **reads** (as oppo
 | **Reading** | The visitor is assumed to be reading an element when it is visible in the viewport and the page is not being scrolled |
 | **Scanning** | The visitor has scrolled an element into view at least once, regardless of whether they paused to read |
 | **Visibility ratio** | The fraction (0–1) of a content element's bounding box that overlaps with the viewport |
-| **Reading speed** | Configurable parameter: characters per minute the average reader consumes (default: 882) |
+| **Reading speed** | Configurable parameter: characters per minute the average reader consumes (default: 1380) |
 | **Estimated reading time** | `element.textContent.length / readingSpeed * 60` (in seconds) |
 
 ## Configuration
@@ -27,7 +27,7 @@ interface MeasurerConfig {
   /** CSS selector for elements to exclude. Default: '' (no exclusions) */
   exclude: string
 
-  /** Average reading speed in characters per minute. Default: 882 */
+  /** Average reading speed in characters per minute. Default: 1380 */
   readingSpeed: number
 
   /** Milliseconds between measurement ticks. Default: 200 */
