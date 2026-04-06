@@ -6,7 +6,7 @@ const DEFAULTS: MeasurerConfig = {
   exclude: '',
   readingSpeed: 1380,
   tickInterval: 200,
-  observerThresholds: [0, 0.25, 0.5, 0.75, 1.0],
+  observerThresholds: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
   scrollSpeedThreshold: 200,
   scrollCooldown: 50,
 }
@@ -219,6 +219,17 @@ export class Measurer {
       const wasSeen = element.hasBeenSeen
       element.updateVisibility(entry)
 
+      // Compute the visible interval from entry geometry and feed it to the element
+      const rect = entry.boundingClientRect
+      const rootBounds = entry.rootBounds
+      if (rootBounds && rect.height > 0) {
+        const start = Math.max(0, Math.min(1, -rect.top / rect.height))
+        const end = Math.max(0, Math.min(1, (rootBounds.height - rect.top) / rect.height))
+        if (start < end) {
+          element.addSeenInterval(start, end)
+        }
+      }
+
       // Cache scanning depth when an element is first seen
       if (!wasSeen && element.hasBeenSeen && element.node.isConnected) {
         const rect = element.node.getBoundingClientRect()
@@ -288,7 +299,7 @@ export class Measurer {
       if (element.visibilityRatio === 0) continue
 
       // Cap reading at the visible boundary and advance at full speed
-      element.timer.targetRatio = element.visibilityRatio
+      element.timer.targetRatio = element.seenRatio
       element.timer.advance(elapsed)
       return // only one element per tick
     }

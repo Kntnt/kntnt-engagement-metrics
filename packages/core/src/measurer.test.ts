@@ -38,9 +38,60 @@ class MockIntersectionObserver {
     return this.#targets
   }
 
-  /** Test helper: simulate an intersection change. */
+  /** Test helper: simulate an intersection change with matching geometry. */
   trigger(target: Element, intersectionRatio: number, isIntersecting: boolean): void {
-    const entry = { target, intersectionRatio, isIntersecting } as IntersectionObserverEntry
+    // Synthesize geometry that produces the correct seen interval.
+    // Element height = 100, viewport = ratio * 100. rectTop = 0 so the
+    // visible fraction becomes [0, ratio]. When ratio = 0, viewportHeight = 0
+    // produces a degenerate interval that is correctly skipped.
+    const rectHeight = 100
+    const viewportHeight = intersectionRatio * rectHeight
+    const entry = {
+      target,
+      intersectionRatio,
+      isIntersecting,
+      boundingClientRect: { top: 0, height: rectHeight } as DOMRectReadOnly,
+      rootBounds: { height: viewportHeight } as DOMRectReadOnly,
+    } as IntersectionObserverEntry
+    this.#callback([entry], this as unknown as IntersectionObserver)
+  }
+
+  /**
+   * Test helper: simulate an intersection change with viewport geometry.
+   * @param target - The observed element.
+   * @param intersectionRatio - Fraction of the element visible (0–1).
+   * @param isIntersecting - Whether the element is in the viewport.
+   * @param rectTop - The element's top edge relative to the viewport (px).
+   * @param rectHeight - The element's total height (px).
+   * @param viewportHeight - The viewport height (px).
+   */
+  triggerWithRect(
+    target: Element,
+    intersectionRatio: number,
+    isIntersecting: boolean,
+    rectTop: number,
+    rectHeight: number,
+    viewportHeight: number,
+  ): void {
+    const entry = {
+      target,
+      intersectionRatio,
+      isIntersecting,
+      boundingClientRect: { top: rectTop, height: rectHeight } as DOMRectReadOnly,
+      rootBounds: { height: viewportHeight } as DOMRectReadOnly,
+    } as IntersectionObserverEntry
+    this.#callback([entry], this as unknown as IntersectionObserver)
+  }
+
+  /** Test helper: simulate an IO entry with null rootBounds (disconnected observer). */
+  triggerWithNull(target: Element, intersectionRatio: number, isIntersecting: boolean): void {
+    const entry = {
+      target,
+      intersectionRatio,
+      isIntersecting,
+      boundingClientRect: { top: 0, height: 100 } as DOMRectReadOnly,
+      rootBounds: null,
+    } as IntersectionObserverEntry
     this.#callback([entry], this as unknown as IntersectionObserver)
   }
 }
@@ -723,6 +774,41 @@ describe('Measurer', () => {
 
       measurer.stop()
     })
+
+    it('accumulates seen intervals across scroll-back (interval tracking)', () => {
+      // 1380 chars = 60s at default speed. Element height = 1000px, viewport = 400px.
+      const longText = 'x'.repeat(1380)
+      setupDOM([longText])
+      const measurer = new Measurer({ tickInterval: 200 })
+      measurer.start()
+
+      const p = document.querySelector('p')!
+
+      // Step 1: Top 30% visible (element top at 0, bottom at 1000, viewport 300px).
+      // start = max(0, -0/1000) = 0, end = min(1, 300/1000) = 0.3
+      mockObserverInstance!.triggerWithRect(p, 0.3, true, 0, 1000, 300)
+
+      // Advance enough time for ~20% reading progress
+      jest.advanceTimersByTime(15000)
+      const progressAfterTop = measurer.getElements()[0]!.readingProgress
+      expect(progressAfterTop).toBeGreaterThan(0.15)
+      expect(progressAfterTop).toBeLessThanOrEqual(0.3)
+
+      // Step 2: Scroll up — bottom 40% visible.
+      // rectTop = -600, height = 1000, viewport = 400
+      // start = max(0, 600/1000) = 0.6, end = min(1, (400 - (-600))/1000) = 1.0
+      mockObserverInstance!.triggerWithRect(p, 0.4, true, -600, 1000, 400)
+
+      // seenRatio should now be 0.3 + 0.4 = 0.7 (disjoint intervals [0,0.3] ∪ [0.6,1.0])
+      // Timer was at ~20%, targetRatio is now 0.7, so it can advance further
+      jest.advanceTimersByTime(30000)
+      const progressAfterBottom = measurer.getElements()[0]!.readingProgress
+      // Should have advanced beyond 0.3 (the old cap), up toward 0.7
+      expect(progressAfterBottom).toBeGreaterThan(0.5)
+      expect(progressAfterBottom).toBeLessThanOrEqual(0.7 + 0.01)
+
+      measurer.stop()
+    })
   })
 
   describe('error resilience', () => {
@@ -787,6 +873,40 @@ describe('Measurer', () => {
       const measurer = new Measurer()
       // Should not throw when no elements exist
       expect(() => measurer.setReadingSpeed(500)).not.toThrow()
+    })
+
+    it('ignores IO entry with zero-height boundingClientRect', () => {
+      const longText = 'x'.repeat(1380)
+      setupDOM([longText])
+      const measurer = new Measurer({ tickInterval: 200 })
+      measurer.start()
+
+      const p = document.querySelector('p')!
+
+      // Trigger with zero-height rect — should not add any seen interval
+      mockObserverInstance!.triggerWithRect(p, 0.5, true, 0, 0, 400)
+
+      const elements = measurer.getElements()
+      expect(elements[0]!.seenRatio).toBe(0)
+
+      measurer.stop()
+    })
+
+    it('ignores IO entry with null rootBounds', () => {
+      const longText = 'x'.repeat(1380)
+      setupDOM([longText])
+      const measurer = new Measurer({ tickInterval: 200 })
+      measurer.start()
+
+      const p = document.querySelector('p')!
+
+      // Manually construct an entry with null rootBounds (simulates disconnected observer)
+      mockObserverInstance!.triggerWithNull(p, 0.5, true)
+
+      const elements = measurer.getElements()
+      expect(elements[0]!.seenRatio).toBe(0)
+
+      measurer.stop()
     })
   })
 })
