@@ -31,3 +31,6 @@ playwright-report/
 # Claude Code
 .claude/
 CLAUDE.local.md
+
+# Superpowers skill docs (auto-generated, not version-controlled)
+docs/superpowers/
