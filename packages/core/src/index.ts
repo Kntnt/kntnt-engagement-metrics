@@ -12,6 +12,7 @@ import { Measurer } from './measurer.js'
 import type { MeasurerConfig } from './types.js'
 
 export { TrackedElement } from './element.js'
+export { IntervalSet } from './interval-set.js'
 export { Measurer } from './measurer.js'
 export type { EngagementMetrics, MeasurerConfig, MetricsListener } from './types.js'
 
