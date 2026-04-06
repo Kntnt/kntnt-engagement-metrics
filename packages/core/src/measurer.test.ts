@@ -483,7 +483,7 @@ describe('Measurer', () => {
   describe('setScrollCooldown()', () => {
     it('accepts zero (disables cooldown)', () => {
       setupDOM(['Hello world'])
-      const measurer = new Measurer({ scrollCooldown: 500 })
+      const measurer = new Measurer({ scrollCooldown: 50 })
       measurer.start()
 
       expect(() => measurer.setScrollCooldown(0)).not.toThrow()
@@ -492,7 +492,7 @@ describe('Measurer', () => {
 
     it('accepts a positive value', () => {
       setupDOM(['Hello world'])
-      const measurer = new Measurer({ scrollCooldown: 500 })
+      const measurer = new Measurer({ scrollCooldown: 50 })
       measurer.start()
 
       expect(() => measurer.setScrollCooldown(1000)).not.toThrow()
@@ -501,7 +501,7 @@ describe('Measurer', () => {
 
     it('rejects negative values', () => {
       setupDOM(['Hello world'])
-      const measurer = new Measurer({ scrollCooldown: 500 })
+      const measurer = new Measurer({ scrollCooldown: 50 })
       measurer.start()
 
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})

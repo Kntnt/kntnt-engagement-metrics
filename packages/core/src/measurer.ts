@@ -7,8 +7,8 @@ const DEFAULTS: MeasurerConfig = {
   readingSpeed: 882,
   tickInterval: 200,
   observerThresholds: [0, 0.25, 0.5, 0.75, 1.0],
-  scrollSpeedThreshold: 50,
-  scrollCooldown: 500,
+  scrollSpeedThreshold: 200,
+  scrollCooldown: 50,
 }
 
 /**

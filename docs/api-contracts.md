@@ -67,8 +67,8 @@ interface MeasurerConfig {
   readingSpeed: number          // Default: 882 (chars/min)
   tickInterval: number          // Default: 200 (ms)
   observerThresholds: number[]  // Default: [0, 0.25, 0.5, 0.75, 1.0]
-  scrollSpeedThreshold: number  // Default: 50 (px/sec)
-  scrollCooldown: number        // Default: 500 (ms)
+  scrollSpeedThreshold: number  // Default: 200 (px/sec)
+  scrollCooldown: number        // Default: 50 (ms)
 }
 ```
 

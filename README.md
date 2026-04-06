@@ -146,8 +146,8 @@ All options are optional. The defaults work well for most sites.
 | `readingSpeed` | `882` | Average reading speed in characters per minute |
 | `tickInterval` | `200` | Milliseconds between measurement ticks |
 | `observerThresholds` | `[0, 0.25, 0.5, 0.75, 1.0]` | Visibility ratios that trigger observer callbacks |
-| `scrollSpeedThreshold` | `50` | Minimum scroll speed (px/sec) to count as scrolling |
-| `scrollCooldown` | `500` | Milliseconds after last scroll before reading resumes |
+| `scrollSpeedThreshold` | `200` | Minimum scroll speed (px/sec) to count as scrolling |
+| `scrollCooldown` | `50` | Milliseconds after last scroll before reading resumes |
 
 ### Selector
 
@@ -177,11 +177,11 @@ The visibility ratios at which the browser's `IntersectionObserver` reports chan
 
 ### Scroll speed threshold
 
-The minimum scroll speed (in pixels per second) for the library to consider the visitor actively scrolling. While the scroll speed exceeds this threshold, reading timers are paused — the visitor is scanning, not reading. The default of 50 px/sec is a good balance for most content.
+The minimum scroll speed (in pixels per second) for the library to consider the visitor actively scrolling. While the scroll speed exceeds this threshold, reading timers are paused — the visitor is scanning, not reading. The default of 200 px/sec is a good balance for most content.
 
 ### Scroll cooldown
 
-How long (in milliseconds) the library waits after the last scroll event before resuming reading timers. The default of 500 ms means the visitor must stop scrolling for half a second before reading is counted again. This prevents brief pauses during a fast scroll from being mistaken for reading.
+How long (in milliseconds) the library waits after the last scroll event before resuming reading timers. The default of 50 ms means the visitor must stop scrolling for 50 milliseconds before reading is counted again. This prevents brief pauses during a fast scroll from being mistaken for reading.
 
 ## Metrics
 

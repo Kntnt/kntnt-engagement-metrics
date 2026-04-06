@@ -18,10 +18,10 @@ export interface MeasurerConfig {
   /** IntersectionObserver threshold steps (array of ratios 0–1). Default: `[0, 0.25, 0.5, 0.75, 1.0]` */
   readonly observerThresholds: number[]
 
-  /** Minimum scroll speed (px/sec) to count as active scrolling. Default: `50` */
+  /** Minimum scroll speed (px/sec) to count as active scrolling. Default: `200` */
   readonly scrollSpeedThreshold: number
 
-  /** Milliseconds after last scroll event before reading resumes. Default: `500` */
+  /** Milliseconds after last scroll event before reading resumes. Default: `50` */
   readonly scrollCooldown: number
 }
 

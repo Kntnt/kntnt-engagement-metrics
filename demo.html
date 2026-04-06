@@ -390,7 +390,7 @@
       <section>
         <h2>Pausing during scrolling and tab switches</h2>
 
-        <p>While the visitor is actively scrolling, reading timers do not advance. The library detects scrolling by measuring scroll speed; once the speed drops below a threshold and remains low for 500 milliseconds, reading resumes. This is the mechanism that distinguishes scanning from reading: a visitor who scrolls steadily through the page produces a high scanning ratio but a low reading ratio, while a visitor who pauses on each paragraph produces high values for both.</p>
+        <p>While the visitor is actively scrolling, reading timers do not advance. The library detects scrolling by measuring scroll speed; once the speed drops below a threshold and remains low for 50 milliseconds, reading resumes. This is the mechanism that distinguishes scanning from reading: a visitor who scrolls steadily through the page produces a high scanning ratio but a low reading ratio, while a visitor who pauses on each paragraph produces high values for both.</p>
 
         <p>Timers also pause whenever the browser tab is hidden. If a visitor switches to another tab for five minutes, those five minutes are not counted as reading time. The Page Visibility API provides this signal, and the library&rsquo;s tick loop is automatically suspended by the browser when the tab is not visible.</p>
       </section>

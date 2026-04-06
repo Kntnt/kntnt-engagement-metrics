@@ -200,7 +200,7 @@ export class HudPanel {
       min: 0,
       max: 2000,
       step: 50,
-      value: 500,
+      value: 50,
       onChange: (val) => this.#measurer.setScrollCooldown(val),
     })
     controlsSection.appendChild(cooldownControl.row)
@@ -210,7 +210,7 @@ export class HudPanel {
       min: 10,
       max: 500,
       step: 10,
-      value: 50,
+      value: 200,
       onChange: (val) => this.#measurer.setScrollSpeedThreshold(val),
     })
     controlsSection.appendChild(scrollControl.row)
