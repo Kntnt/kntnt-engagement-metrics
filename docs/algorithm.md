@@ -72,13 +72,7 @@ When an element's intersection changes:
 3. If `entry.isIntersecting` and `element.hasBeenSeen` is false:
    - Set `element.hasBeenSeen = true`.
    - Update the cached `scanningDepth` incrementally: compute the element's absolute bottom position (`el.getBoundingClientRect().bottom + window.scrollY`) and keep the maximum across all seen elements. This avoids recalculating scanning depth on every tick.
-4. Compute the visible interval from entry geometry:
-   - Let `rect = entry.boundingClientRect` and `rootBounds = entry.rootBounds`.
-   - If `rootBounds` is null or `rect.height` is 0, skip interval computation.
-   - `start = clamp(0, -rect.top / rect.height, 1)`
-   - `end = clamp(0, (rootBounds.height - rect.top) / rect.height, 1)`
-   - If `start < end`, call `element.addSeenInterval(start, end)` to accumulate the visible region.
-   - The element's `seenRatio` (total coverage of all accumulated intervals) is used as `targetRatio` in the measurement tick.
+4. Compute the visible interval from entry geometry and store it on the `TrackedElement` as `visibleStart`/`visibleEnd`. Snapshot the timer's current progress and compute `computedTargetRatio = min(1, progress + max(0, end - max(start, progress)))`. This value is frozen until the next IO callback — it does not slide as the timer advances between callbacks. Additionally, the interval is accumulated into the element's `seenIntervals` for diagnostic/overlay purposes.
 
 This callback fires asynchronously and efficiently — no polling needed for visibility changes.
 
@@ -120,7 +114,7 @@ function tick(timestamp):
         if element.visibilityRatio == 0: continue
 
         // Cap reading at the seen boundary and advance at full speed
-        element.timer.targetRatio = element.seenRatio
+        element.timer.targetRatio = element.computedTargetRatio
         element.timer.advance(elapsed)
         break  // only one element per tick
 
@@ -233,10 +227,10 @@ class Timer {
 The algorithm models a human reader who reads one paragraph at a time, top to bottom:
 
 1. **One element at a time**: on each tick, only the topmost unfinished element that is currently visible in the viewport advances its timer.
-2. **Target-ratio cap**: the timer's `targetRatio` is set to the element's `seenRatio` — the cumulative fraction of the element that has ever been visible, tracked as merged intervals. This means reading progresses up to the total seen boundary, then stops. Unlike the instantaneous visibility ratio, this correctly handles cases where different parts of the element were visible at different times (e.g., top visible on load, bottom visible after scroll-back).
+2. **Target-ratio cap**: on each IO callback, the element snapshots its timer progress and computes `targetRatio = progress + max(0, visibleEnd - max(visibleStart, progress))`. This value is frozen until the next IO callback. Reading can only advance through content that was visible at the time of the last intersection change. The snapshot prevents a sliding-ceiling effect where per-tick recomputation would let progress bootstrap itself past the intended cap.
 3. **Skip ahead**: if the topmost unfinished element has `visibilityRatio === 0` (scrolled out of view), the algorithm skips to the next visible unfinished element. This models a reader who scrolls past content.
 4. **Scroll-back resumes**: if the user scrolls back up to a partially-read element, reading resumes from where it left off. Progress is never lost.
-5. **Full-speed advancement**: within the target cap, the timer advances at 1:1 real time (not scaled by visibility). The cap — not the speed — controls how far reading can progress.
+5. **Full-speed advancement**: within the snapshot target cap, the timer advances at 1:1 real time (not scaled by visibility). The cap — not the speed — controls how far reading can progress.
 
 ## Runtime recalibration
 

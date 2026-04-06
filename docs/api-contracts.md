@@ -130,6 +130,18 @@ interface TrackedElement {
   /** The merged seen intervals, for diagnostic/overlay use. */
   readonly seenIntervals: ReadonlyArray<readonly [number, number]>
 
+  /** Start of the currently visible interval (0 = element top, 1 = element bottom). Resets to 0 when element leaves viewport. */
+  readonly visibleStart: number
+
+  /** End of the currently visible interval (0 = element top, 1 = element bottom). Resets to 0 when element leaves viewport. */
+  readonly visibleEnd: number
+
+  /**
+   * Precomputed targetRatio based on the visible interval at the time of the last
+   * IO callback. Snapshots timer progress so the ceiling doesn't slide between callbacks.
+   */
+  readonly computedTargetRatio: number
+
   /**
    * Record a visible interval for this element.
    * @internal Used by Measurer — add-ons and external code must not call this.
