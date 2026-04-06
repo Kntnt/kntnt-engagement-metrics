@@ -104,6 +104,23 @@ const HUD_STYLES = `
     padding: 2px 4px;
     text-align: right;
   }
+  .shortcut-hint {
+    border-top: 1px solid #333;
+    padding-top: 8px;
+    margin-top: 8px;
+    color: #666;
+    font-size: 11px;
+    text-align: center;
+  }
+  kbd {
+    background: #333;
+    border: 1px solid #555;
+    border-radius: 3px;
+    padding: 1px 4px;
+    font-family: inherit;
+    font-size: 11px;
+    color: #999;
+  }
 `
 
 /** Position offsets for each HUD corner. */
@@ -133,7 +150,7 @@ export class HudPanel {
   readonly #infoLine: HTMLDivElement
   readonly #statusLine: HTMLDivElement
 
-  constructor(position: OverlayConfig['hudPosition'], measurer: Measurer) {
+  constructor(position: OverlayConfig['hudPosition'], measurer: Measurer, toggleKey: string) {
     this.#measurer = measurer
 
     // Create host element
@@ -216,6 +233,14 @@ export class HudPanel {
     controlsSection.appendChild(scrollControl.row)
 
     container.appendChild(controlsSection)
+
+    // Keyboard shortcut hint
+    const hint = document.createElement('div')
+    hint.className = 'shortcut-hint'
+    const keyLabel = toggleKey.replace(/^Key/, '')
+    hint.innerHTML = `<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>${keyLabel}</kbd> to toggle overlay`
+    container.appendChild(hint)
+
     this.#shadow.appendChild(container)
 
     // Append to document

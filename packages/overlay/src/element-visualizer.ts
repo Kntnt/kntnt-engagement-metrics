@@ -54,10 +54,18 @@ export class ElementVisualizer {
   /** Restore all elements to their original styles. */
   cleanup(): void {
     for (const element of this.#elements) {
+      if (!(element.node instanceof HTMLElement)) continue
       const original = this.#originalStyles.get(element.node)
-      if (!original || !(element.node instanceof HTMLElement)) continue
-      element.node.style.outline = original.outline
-      element.node.style.background = original.background
+      if (original?.outline) {
+        element.node.style.outline = original.outline
+      } else {
+        element.node.style.removeProperty('outline')
+      }
+      if (original?.background) {
+        element.node.style.background = original.background
+      } else {
+        element.node.style.removeProperty('background')
+      }
     }
   }
 }

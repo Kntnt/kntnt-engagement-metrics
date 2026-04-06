@@ -150,6 +150,12 @@ test.describe('Overlay scenario', () => {
 
     const hudCount = await page.locator('[data-kntnt-overlay="hud"]').count()
     expect(hudCount).toBe(0)
+
+    // Element visualizations should also be removed after toggle
+    const firstOutlineAfterToggle = await firstP.evaluate((el) => el.style.outline)
+    const firstBgAfterToggle = await firstP.evaluate((el) => el.style.background)
+    expect(firstOutlineAfterToggle).toBe('')
+    expect(firstBgAfterToggle).toBe('')
   })
 })
 

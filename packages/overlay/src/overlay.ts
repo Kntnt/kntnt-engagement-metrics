@@ -77,7 +77,7 @@ export class EngagementOverlay implements MetricsListener {
     }
 
     if (this.#config.showHud) {
-      this.#hud = new HudPanel(this.#config.hudPosition, this.#measurer)
+      this.#hud = new HudPanel(this.#config.hudPosition, this.#measurer, this.#config.toggleKey)
     }
   }
 

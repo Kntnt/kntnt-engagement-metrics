@@ -70,7 +70,7 @@ describe('HudPanel', () => {
 
   it('is appended to document.body with shadow root', () => {
     const measurer = mockMeasurer()
-    const hud = new HudPanel('bottom-right', measurer)
+    const hud = new HudPanel('bottom-right', measurer, 'KeyD')
 
     const host = document.querySelector('[data-kntnt-overlay="hud"]')
     expect(host).not.toBeNull()
@@ -80,7 +80,7 @@ describe('HudPanel', () => {
 
   it('update() renders correct metric values', () => {
     const measurer = mockMeasurer()
-    const hud = new HudPanel('bottom-right', measurer)
+    const hud = new HudPanel('bottom-right', measurer, 'KeyD')
     const metrics = mockMetrics()
     const elements = mockElements(10, 5, 8)
 
@@ -93,7 +93,7 @@ describe('HudPanel', () => {
 
   it('hide() and show() toggle display', () => {
     const measurer = mockMeasurer()
-    const hud = new HudPanel('bottom-right', measurer)
+    const hud = new HudPanel('bottom-right', measurer, 'KeyD')
 
     const host = document.querySelector('[data-kntnt-overlay="hud"]') as HTMLElement
     expect(host.style.display).not.toBe('none')
@@ -109,7 +109,7 @@ describe('HudPanel', () => {
 
   it('destroy() removes host element from DOM', () => {
     const measurer = mockMeasurer()
-    const hud = new HudPanel('bottom-right', measurer)
+    const hud = new HudPanel('bottom-right', measurer, 'KeyD')
 
     expect(document.querySelector('[data-kntnt-overlay="hud"]')).not.toBeNull()
 
@@ -123,7 +123,7 @@ describe('HudPanel', () => {
 
     const positions = ['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const
     for (const pos of positions) {
-      const hud = new HudPanel(pos, measurer)
+      const hud = new HudPanel(pos, measurer, 'KeyD')
       const host = document.querySelector('[data-kntnt-overlay="hud"]') as HTMLElement
       const style = host.style.cssText
 
