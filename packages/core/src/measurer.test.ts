@@ -799,13 +799,121 @@ describe('Measurer', () => {
       // start = max(0, 600/1000) = 0.6, end = min(1, (400 - (-600))/1000) = 1.0
       mockObserverInstance!.triggerWithRect(p, 0.4, true, -600, 1000, 400)
 
-      // seenRatio should now be 0.3 + 0.4 = 0.7 (disjoint intervals [0,0.3] ∪ [0.6,1.0])
-      // Timer was at ~20%, targetRatio is now 0.7, so it can advance further
+      // Snapshot formula at progress ≈ 0.25: visible = [0.6, 1.0]
+      // targetRatio = 0.25 + max(0, 1.0 - max(0.6, 0.25)) = 0.25 + 0.4 = 0.65
       jest.advanceTimersByTime(30000)
       const progressAfterBottom = measurer.getElements()[0]!.readingProgress
-      // Should have advanced beyond 0.3 (the old cap), up toward 0.7
+      // Should have advanced beyond 0.3 (the old cap), up toward snapshot target ~0.65
       expect(progressAfterBottom).toBeGreaterThan(0.5)
-      expect(progressAfterBottom).toBeLessThanOrEqual(0.7 + 0.01)
+      expect(progressAfterBottom).toBeLessThanOrEqual(0.66)
+
+      measurer.stop()
+    })
+
+    it('caps targetRatio at current visibility, not cumulative seenRatio', () => {
+      // THE BUG: element briefly fully visible → seenRatio = 1.0
+      // Then scrolled so only last 10% visible → timer should NOT reach 100%.
+      const longText = 'x'.repeat(1380) // 60s at default speed
+      setupDOM([longText])
+      const measurer = new Measurer({ tickInterval: 200 })
+      measurer.start()
+
+      const p = document.querySelector('p')!
+
+      // Step 1: Element fully visible. computedTargetRatio → 1.0
+      mockObserverInstance!.triggerWithRect(p, 1.0, true, 0, 1000, 1000)
+
+      // Read for 3 seconds (5% of 60s)
+      jest.advanceTimersByTime(3000)
+      const progressBefore = measurer.getElements()[0]!.readingProgress
+      expect(progressBefore).toBeCloseTo(0.05, 1)
+
+      // Step 2: Scroll so only last 10% visible. visible = [0.9, 1.0], progress ≈ 0.05
+      // Snapshot: targetRatio = 0.05 + max(0, 1.0 - max(0.9, 0.05)) = 0.05 + 0.1 = 0.15
+      mockObserverInstance!.triggerWithRect(p, 0.1, true, -900, 1000, 100)
+
+      // Advance way more than enough time
+      jest.advanceTimersByTime(60000)
+
+      const progressAfter = measurer.getElements()[0]!.readingProgress
+      // Timer stops at the snapshot target (~0.15), NOT at seenRatio (1.0)
+      expect(progressAfter).toBeCloseTo(0.15, 1)
+      expect(progressAfter).toBeLessThan(0.2)
+
+      measurer.stop()
+    })
+
+    it('does not advance beyond already-read region when only that region is visible', () => {
+      const longText = 'x'.repeat(1380) // 60s
+      setupDOM([longText])
+      const measurer = new Measurer({ tickInterval: 200 })
+      measurer.start()
+
+      const p = document.querySelector('p')!
+
+      // Read top 50% (element fully visible, read for 30s)
+      mockObserverInstance!.triggerWithRect(p, 1.0, true, 0, 1000, 1000)
+      jest.advanceTimersByTime(30000)
+      const progress50 = measurer.getElements()[0]!.readingProgress
+      expect(progress50).toBeCloseTo(0.5, 1)
+
+      // Now only top 30% visible (already-read region).
+      // Snapshot: progress=0.5, visible=[0,0.3], target = 0.5 + max(0, 0.3 - max(0, 0.5)) = 0.5
+      mockObserverInstance!.triggerWithRect(p, 0.3, true, 0, 1000, 300)
+      jest.advanceTimersByTime(10000)
+      const progressAfter = measurer.getElements()[0]!.readingProgress
+      expect(progressAfter).toBeCloseTo(0.5, 1)
+
+      measurer.stop()
+    })
+
+    it('allows reading through partially overlapping visible region', () => {
+      const longText = 'x'.repeat(1380) // 60s
+      setupDOM([longText])
+      const measurer = new Measurer({ tickInterval: 200 })
+      measurer.start()
+
+      const p = document.querySelector('p')!
+
+      // Read top 30% (element visible [0, 0.5], read for 18s → progress ~0.3)
+      mockObserverInstance!.triggerWithRect(p, 0.5, true, 0, 1000, 500)
+      jest.advanceTimersByTime(18000)
+      const progress30 = measurer.getElements()[0]!.readingProgress
+      expect(progress30).toBeCloseTo(0.3, 1)
+
+      // Scroll: visible [0.2, 0.8]. Snapshot at progress=0.3:
+      // targetRatio = 0.3 + max(0, 0.8 - max(0.2, 0.3)) = 0.3 + 0.5 = 0.8
+      mockObserverInstance!.triggerWithRect(p, 0.6, true, -200, 1000, 600)
+      jest.advanceTimersByTime(40000)
+      const progressAfter = measurer.getElements()[0]!.readingProgress
+      expect(progressAfter).toBeCloseTo(0.8, 1)
+
+      measurer.stop()
+    })
+
+    it('snapshot targetRatio does not slide as timer advances between IO callbacks', () => {
+      const longText = 'x'.repeat(1380) // 60s
+      setupDOM([longText])
+      const measurer = new Measurer({ tickInterval: 200 })
+      measurer.start()
+
+      const p = document.querySelector('p')!
+
+      // Read 20% with full visibility
+      mockObserverInstance!.triggerWithRect(p, 1.0, true, 0, 1000, 1000)
+      jest.advanceTimersByTime(12000)
+      const progress20 = measurer.getElements()[0]!.readingProgress
+      expect(progress20).toBeCloseTo(0.2, 1)
+
+      // Scroll: bottom 40% visible [0.6, 1.0]. Snapshot at progress=0.2:
+      // targetRatio = 0.2 + max(0, 1.0 - max(0.6, 0.2)) = 0.2 + 0.4 = 0.6
+      mockObserverInstance!.triggerWithRect(p, 0.4, true, -600, 1000, 400)
+
+      // Advance plenty of time — timer should stop at 0.6, NOT slide to 1.0
+      jest.advanceTimersByTime(60000)
+      const progressAfter = measurer.getElements()[0]!.readingProgress
+      expect(progressAfter).toBeCloseTo(0.6, 1)
+      expect(progressAfter).toBeLessThan(0.65)
 
       measurer.stop()
     })
