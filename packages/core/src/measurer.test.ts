@@ -799,13 +799,14 @@ describe('Measurer', () => {
       // start = max(0, 600/1000) = 0.6, end = min(1, (400 - (-600))/1000) = 1.0
       mockObserverInstance!.triggerWithRect(p, 0.4, true, -600, 1000, 400)
 
-      // Snapshot formula at progress ≈ 0.25: visible = [0.6, 1.0]
-      // targetRatio = 0.25 + max(0, 1.0 - max(0.6, 0.25)) = 0.25 + 0.4 = 0.65
+      // Progress is in (0.15, 0.3] after the top-half phase; visible = [0.6, 1.0]
+      // targetRatio = progress + max(0, 1.0 - max(0.6, progress)) = progress + 0.4
+      // So targetRatio is in (0.55, 0.70]
       jest.advanceTimersByTime(30000)
       const progressAfterBottom = measurer.getElements()[0]!.readingProgress
-      // Should have advanced beyond 0.3 (the old cap), up toward snapshot target ~0.65
+      // Should have advanced beyond 0.3 (the old cap), up toward snapshot target
       expect(progressAfterBottom).toBeGreaterThan(0.5)
-      expect(progressAfterBottom).toBeLessThanOrEqual(0.66)
+      expect(progressAfterBottom).toBeLessThanOrEqual(0.71)
 
       measurer.stop()
     })
@@ -837,7 +838,7 @@ describe('Measurer', () => {
 
       const progressAfter = measurer.getElements()[0]!.readingProgress
       // Timer stops at the snapshot target (~0.15), NOT at seenRatio (1.0)
-      expect(progressAfter).toBeCloseTo(0.15, 1)
+      expect(progressAfter).toBeCloseTo(0.15, 2)
       expect(progressAfter).toBeLessThan(0.2)
 
       measurer.stop()
