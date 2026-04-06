@@ -3,13 +3,29 @@ import type { EngagementMetrics, Measurer, TrackedElement } from '@kntnt/engagem
 import { HudPanel } from './hud.js'
 
 /** Create a minimal mock measurer. */
-function mockMeasurer(): Measurer & { lastSpeed: number } {
+function mockMeasurer(): Measurer & {
+  lastSpeed: number
+  lastScrollCooldown: number
+  lastScrollSpeedThreshold: number
+} {
   return {
     lastSpeed: 0,
+    lastScrollCooldown: 0,
+    lastScrollSpeedThreshold: 0,
     setReadingSpeed(speed: number) {
       this.lastSpeed = speed
     },
-  } as Measurer & { lastSpeed: number }
+    setScrollCooldown(ms: number) {
+      this.lastScrollCooldown = ms
+    },
+    setScrollSpeedThreshold(pxPerSec: number) {
+      this.lastScrollSpeedThreshold = pxPerSec
+    },
+  } as Measurer & {
+    lastSpeed: number
+    lastScrollCooldown: number
+    lastScrollSpeedThreshold: number
+  }
 }
 
 /** Create mock metrics. */

@@ -65,16 +65,27 @@ const HUD_STYLES = `
     margin-top: 4px;
     margin-bottom: 8px;
   }
-  .speed-row {
+  .controls-section {
+    border-top: 1px solid #333;
+    padding-top: 8px;
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .control-row {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 8px;
-    border-top: 1px solid #333;
-    padding-top: 8px;
   }
-  .speed-label {
+  .control-label {
+    width: 65px;
     flex-shrink: 0;
+  }
+  .control-unit {
+    color: #999;
+    flex-shrink: 0;
+    width: 30px;
   }
   input[type="range"] {
     flex: 1;
@@ -92,10 +103,6 @@ const HUD_STYLES = `
     font-size: 12px;
     padding: 2px 4px;
     text-align: right;
-  }
-  .speed-unit {
-    color: #999;
-    flex-shrink: 0;
   }
 `
 
@@ -125,10 +132,6 @@ export class HudPanel {
   readonly #scanningValue: HTMLSpanElement
   readonly #infoLine: HTMLDivElement
   readonly #statusLine: HTMLDivElement
-
-  // Speed control elements
-  readonly #speedSlider: HTMLInputElement
-  readonly #speedInput: HTMLInputElement
 
   constructor(position: OverlayConfig['hudPosition'], measurer: Measurer) {
     this.#measurer = measurer
@@ -178,54 +181,42 @@ export class HudPanel {
     this.#statusLine.className = 'info'
     container.appendChild(this.#statusLine)
 
-    // Speed control row
-    const speedRow = document.createElement('div')
-    speedRow.className = 'speed-row'
+    // Controls section
+    const controlsSection = document.createElement('div')
+    controlsSection.className = 'controls-section'
 
-    const speedLabel = document.createElement('span')
-    speedLabel.className = 'speed-label'
-    speedLabel.textContent = 'Speed'
-    speedRow.appendChild(speedLabel)
+    // Reading speed control
+    const speedControl = this.#createControlRow('Speed', 'cpm', {
+      min: 50,
+      max: 5000,
+      step: 50,
+      value: 882,
+      onChange: (val) => this.#measurer.setReadingSpeed(val),
+    })
+    controlsSection.appendChild(speedControl.row)
 
-    this.#speedSlider = document.createElement('input')
-    this.#speedSlider.type = 'range'
-    this.#speedSlider.min = '100'
-    this.#speedSlider.max = '3000'
-    this.#speedSlider.step = '50'
-    this.#speedSlider.value = '882'
-    speedRow.appendChild(this.#speedSlider)
+    // Scroll cooldown control
+    const cooldownControl = this.#createControlRow('Cooldown', 'ms', {
+      min: 0,
+      max: 2000,
+      step: 50,
+      value: 500,
+      onChange: (val) => this.#measurer.setScrollCooldown(val),
+    })
+    controlsSection.appendChild(cooldownControl.row)
 
-    this.#speedInput = document.createElement('input')
-    this.#speedInput.type = 'number'
-    this.#speedInput.min = '100'
-    this.#speedInput.max = '3000'
-    this.#speedInput.step = '50'
-    this.#speedInput.value = '882'
-    speedRow.appendChild(this.#speedInput)
+    // Scroll speed threshold control
+    const scrollControl = this.#createControlRow('Scroll', 'px/s', {
+      min: 10,
+      max: 500,
+      step: 10,
+      value: 50,
+      onChange: (val) => this.#measurer.setScrollSpeedThreshold(val),
+    })
+    controlsSection.appendChild(scrollControl.row)
 
-    const unit = document.createElement('span')
-    unit.className = 'speed-unit'
-    unit.textContent = 'cpm'
-    speedRow.appendChild(unit)
-
-    container.appendChild(speedRow)
+    container.appendChild(controlsSection)
     this.#shadow.appendChild(container)
-
-    // Wire up speed controls with bounds validation
-    const applySpeed = (value: number) => {
-      const clamped = Math.max(100, Math.min(3000, Math.round(value)))
-      if (!Number.isFinite(clamped)) return
-      this.#speedSlider.value = String(clamped)
-      this.#speedInput.value = String(clamped)
-      this.#measurer.setReadingSpeed(clamped)
-    }
-
-    this.#speedSlider.addEventListener('input', () => {
-      applySpeed(Number(this.#speedSlider.value))
-    })
-    this.#speedInput.addEventListener('input', () => {
-      applySpeed(Number(this.#speedInput.value))
-    })
 
     // Append to document
     document.body.appendChild(this.#host)
@@ -292,5 +283,84 @@ export class HudPanel {
     row.appendChild(value)
 
     return { row, bar, value }
+  }
+
+  /** Create a slider + number input control row with commit-on-blur/Enter semantics. */
+  #createControlRow(
+    label: string,
+    unit: string,
+    opts: {
+      min: number
+      max: number
+      step: number
+      value: number
+      onChange: (value: number) => void
+    },
+  ): { row: HTMLDivElement; slider: HTMLInputElement; input: HTMLInputElement } {
+    const row = document.createElement('div')
+    row.className = 'control-row'
+
+    const labelEl = document.createElement('span')
+    labelEl.className = 'control-label'
+    labelEl.textContent = label
+    row.appendChild(labelEl)
+
+    // Slider: retains step, applies immediately on input
+    const slider = document.createElement('input')
+    slider.type = 'range'
+    slider.min = String(opts.min)
+    slider.max = String(opts.max)
+    slider.step = String(opts.step)
+    slider.value = String(opts.value)
+    row.appendChild(slider)
+
+    // Number input: step="any" for free-form typing, commits on blur/Enter
+    const input = document.createElement('input')
+    input.type = 'number'
+    input.min = String(opts.min)
+    input.max = String(opts.max)
+    input.step = 'any'
+    input.value = String(opts.value)
+    row.appendChild(input)
+
+    const unitEl = document.createElement('span')
+    unitEl.className = 'control-unit'
+    unitEl.textContent = unit
+    row.appendChild(unitEl)
+
+    // Current effective value — used to restore on invalid input
+    let currentValue = opts.value
+
+    // Slider → apply immediately and sync text field
+    slider.addEventListener('input', () => {
+      const val = Number(slider.value)
+      currentValue = val
+      input.value = String(val)
+      opts.onChange(val)
+    })
+
+    // Text field → commit on blur or Enter
+    const commitInput = () => {
+      const raw = Number(input.value)
+      if (!Number.isFinite(raw)) {
+        input.value = String(currentValue)
+        return
+      }
+      const clamped = Math.max(opts.min, Math.min(opts.max, Math.round(raw)))
+      currentValue = clamped
+      input.value = String(clamped)
+      slider.value = String(clamped)
+      opts.onChange(clamped)
+    }
+
+    input.addEventListener('blur', commitInput)
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        commitInput()
+      }
+    })
+
+    return { row, slider, input }
   }
 }
