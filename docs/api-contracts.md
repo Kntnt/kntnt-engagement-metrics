@@ -40,6 +40,19 @@ class Measurer {
    */
   setReadingSpeed(charsPerMinute: number): void
 
+  /**
+   * Change the scroll cooldown duration at runtime.
+   * Negative, NaN, and Infinity values are silently ignored (a warning is logged).
+   * Zero disables the cooldown (reading resumes immediately after scrolling stops).
+   */
+  setScrollCooldown(ms: number): void
+
+  /**
+   * Change the scroll speed threshold at runtime.
+   * Non-positive, NaN, and Infinity values are silently ignored (a warning is logged).
+   */
+  setScrollSpeedThreshold(pxPerSec: number): void
+
   /** True if measurement is currently running. */
   readonly isActive: boolean
 }
@@ -292,11 +305,15 @@ class EngagementOverlay implements MetricsListener {
 
 ### HUD panel
 
-The HUD panel displays live metrics (reading %, scanning %, element counts, status) and includes an interactive reading speed control:
+The HUD panel displays live metrics (reading %, scanning %, element counts, status) and includes interactive controls for tuning measurement parameters:
 
-- **Range slider** (100–3000 cpm) and **numeric input** for reading speed
-- Changes take effect immediately via `measurer.setReadingSpeed()`
-- Toggle the overlay with `Ctrl+Shift+D` (configurable)
+- **Reading speed** — range slider (50–5,000 cpm) and numeric input. Changes take effect immediately via `measurer.setReadingSpeed()`.
+- **Scroll cooldown** — range slider (0–2,000 ms) and numeric input. Changes take effect immediately via `measurer.setScrollCooldown()`.
+- **Scroll speed threshold** — range slider (10–500 px/s) and numeric input. Changes take effect immediately via `measurer.setScrollSpeedThreshold()`.
+
+Slider controls use fixed step increments (50/50/10). Numeric inputs accept free-form typing and apply the value on blur or Enter (clamped to the valid range).
+
+Toggle the overlay with `Ctrl+Shift+D` (configurable).
 
 ### IIFE global
 

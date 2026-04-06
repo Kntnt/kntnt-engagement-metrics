@@ -233,7 +233,19 @@ The algorithm models a human reader who reads one paragraph at a time, top to bo
 
 ## Runtime recalibration
 
-The reading speed can be changed at runtime via `measurer.setReadingSpeed(charsPerMinute)`. The method validates its input and rejects non-positive, `NaN`, or `Infinity` values. This recalibrates all element timers by computing a new `initialDuration` for each element (`charCount / newSpeed * 60`) and calling `timer.recalibrate()`, which preserves the current reading progress. Elements that have already been fully read remain complete. This enables real-time experimentation with different reading speeds using the overlay add-on.
+Three measurement parameters can be changed at runtime via setter methods on the measurer. All three validate their input and silently reject invalid values (with a `console.warn()`).
+
+### Reading speed
+
+`measurer.setReadingSpeed(charsPerMinute)` accepts any positive finite number. It recalibrates all element timers by computing a new `initialDuration` for each element (`charCount / newSpeed * 60`) and calling `timer.recalibrate()`, which preserves the current reading progress. Elements that have already been fully read remain complete. This enables real-time experimentation with different reading speeds using the overlay add-on.
+
+### Scroll cooldown
+
+`measurer.setScrollCooldown(ms)` accepts any non-negative finite number (including zero). The value is written to the internal config and takes effect on the next scroll event. Setting the cooldown to zero disables the cooldown — reading resumes immediately after scrolling stops.
+
+### Scroll speed threshold
+
+`measurer.setScrollSpeedThreshold(pxPerSec)` accepts any positive finite number. The value is written to the internal config and takes effect on the next scroll event.
 
 ## Edge cases
 

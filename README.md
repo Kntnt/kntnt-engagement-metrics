@@ -1,6 +1,6 @@
 # Kntnt Engagement Metrics
 
-A JavaScript library that estimates how much of the content a visitor has likely read.
+A lightweight JavaScript library that measures how deeply users read your content, not just page views. It tracks reading time, scroll depth, and content engagement. There are also add-ons for Google Analytics, Matomo, and visualization.
 
 ## Description
 
@@ -86,6 +86,8 @@ The defaults differ because the platforms have different constraints. A self-hos
 
 When the reading ratio first crosses a threshold, the add-on fires a single event to your analytics platform — for example, "this visitor has read 25% of the content". Each threshold fires exactly once; subsequent ticks that remain above it do not trigger another event. A fully engaged reader generates a handful of reading events and a few scanning events for the entire page visit.
 
+This incremental reporting also serves as a safeguard against data loss. Browser `unload` and `beforeunload` events are unreliable — especially on mobile, where the browser may close a tab without firing them. Because thresholds are reported as they are crossed during the visit, the analytics platform always has data from the last threshold reached, even if the final update never arrives. A visitor who read 73% of the content and then left has already generated an event at 70%.
+
 ### Auto-stop
 
 Once every element has been fully read and the visitor has scrolled to the bottom of the page, both the reading ratio and scanning ratio reach 1. The library then stops its measurement loop and releases its observers and event listeners, leaving zero overhead on the page.
@@ -131,7 +133,7 @@ The overlay add-on shows measurement happening in real time, directly on the pag
 - **Green** outline and background — element fully read
 - **Red** outline — element previously seen but no longer visible (paused)
 
-The HUD panel includes a reading speed slider (100–3,000 characters per minute) that recalibrates all timers instantly, letting you find the right speed for your content. Toggle the overlay with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd>.
+The HUD panel includes controls for tuning measurement parameters in real time: reading speed (50–5,000 characters per minute), scroll cooldown (0–2,000 ms), and scroll speed threshold (10–500 px/s). Sliders step in fixed increments; numeric inputs accept any value within the range. Toggle the overlay with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd>.
 
 ## Configuration
 
@@ -163,7 +165,7 @@ The average reading speed in characters per minute. The library uses this to cal
 
 The default of 882 characters per minute comes from the International Reading Speed Texts (IReST) project, which measured reading speeds across 17 languages. The mean across 14 of those languages was 882 cpm, with speeds ranging from 65 to 71 milliseconds per character at a 95% confidence interval (Trauzettel-Klosinski S, Dietz K; IReST Study Group, "[Standardized Assessment of Reading Performance: The New International Reading Speed Texts IReST](https://doi.org/10.1167/iovs.11-8284)", *Invest Ophthalmol Vis Sci.* 2012;53(9):5452–5461).
 
-You can change the reading speed at runtime via `measurer.setReadingSpeed()`, which recalibrates all timers while preserving current progress.
+You can change the reading speed at runtime via `measurer.setReadingSpeed()`, which recalibrates all timers while preserving current progress. The scroll speed threshold and scroll cooldown are also adjustable at runtime via `measurer.setScrollSpeedThreshold()` and `measurer.setScrollCooldown()`.
 
 ### Tick interval
 
@@ -255,6 +257,33 @@ To find the data, go to **Behaviour > Events** in the Matomo dashboard and filte
 
 From there you can build segments (for example, visitors whose reading ratio reached at least 50%) or create custom reports that combine engagement data with other dimensions such as traffic source or landing page.
 
+#### Adjusting thresholds
+
+The default thresholds — every ten percentage points for reading and every 25 for scanning — are intentionally granular. If you want even finer steps (for example every five percentage points), you can configure them freely. Matomo has no event quotas or sampling limits, so denser thresholds have no technical cost beyond a marginally larger database.
+
+#### Custom dimensions (optional)
+
+The threshold events tell you that a visitor reached "at least 40%" but not whether the actual value was 41% or 49%. For most distribution analyses this is sufficient. If you need exact values — for example to compute average reading ratio per page or to segment visitors by precise engagement level — you can set up Matomo custom dimensions.
+
+The add-on can send three custom dimension values: reading ratio, scanning ratio, and reading time. Each is updated whenever a threshold event fires, so the final value stored in Matomo reflects the visitor's engagement at the last threshold they crossed.
+
+To set this up:
+
+1. Go to **Administration > Custom Dimensions** in Matomo (if you do not see this menu item, activate the "Custom Dimensions" plugin under Administration > Plugins).
+2. Create three dimensions of type **Action scope** — for example "Reading ratio", "Scanning ratio", and "Reading time".
+3. Note the numeric ID that Matomo assigns to each dimension.
+4. Pass the IDs in the add-on configuration:
+
+```javascript
+registerMatomo(measurer, {
+  readingRatioDimension: 1,   // replace with your actual ID
+  scanningRatioDimension: 2,
+  readingTimeDimension: 3,
+})
+```
+
+Once configured, the exact values appear alongside other dimensions in Matomo's reporting and segmentation tools.
+
 ### Google Analytics 4
 
 Events arrive in GA4 immediately, but you need one extra step to make the event parameters available in reports.
@@ -274,6 +303,20 @@ GA4 collects the events automatically, but by default it does not include custom
 4. Repeat for each parameter you want to use in reports.
 
 Once the dimensions are registered, you can find the data under **Reports > Engagement > Events**, filtered by event name. For more flexible analysis, use **Explore** to build free-form reports that combine engagement parameters with other dimensions such as page path, source/medium, or device category.
+
+#### Adjusting thresholds
+
+The default reading thresholds for GA4 (10%, 25%, 50%, 75%, 90%, 100%) are sparser than the Matomo defaults because GA4's free tier applies sampling at high event volumes, enforces daily event quotas, and limits the number of custom dimensions per property. If your site has moderate traffic (under 25 million events per month), you can safely add denser thresholds — for example the same ten-percentage-point steps that the Matomo add-on uses. If you start seeing "(other)" in your reports, you have hit a cardinality limit and should reduce the number of unique values.
+
+#### Key events, audiences, and BigQuery (optional)
+
+Three GA4 features can add value beyond basic event reporting:
+
+**Key events.** Mark one of the engagement events as a key event (formerly called a "conversion"). For example, mark `engagement_reading` with the condition that `percentage` is 50 or higher. Every visitor who reads at least half the content then counts as a conversion, letting you see which traffic sources and campaigns drive engaged readers — not just clicks.
+
+**Audiences.** Under Admin > Audiences, create an audience such as "visitors who triggered engagement_reading with percentage ≥ 75". This gives you a segment of deep readers that you can use for remarketing or comparative analysis.
+
+**BigQuery export.** If your GA4 property is linked to BigQuery, all event parameters land in the raw data automatically, free from the reporting interface's cardinality and sampling limits. You can run SQL queries against exact values, compute averages, and build custom visualisations without any additional configuration in the add-on.
 
 ## Build and install
 
