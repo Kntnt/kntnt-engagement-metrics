@@ -219,7 +219,9 @@ export class Measurer {
       const wasSeen = element.hasBeenSeen
       element.updateVisibility(entry)
 
-      // Compute the visible interval from entry geometry and feed it to the element
+      // Compute the visible fraction as a [start, end] interval in element-relative
+      // coordinates (0 = element top, 1 = element bottom). rect.top is relative to
+      // the viewport: negative means the element has scrolled above the viewport edge.
       const rect = entry.boundingClientRect
       const rootBounds = entry.rootBounds
       if (rootBounds && rect.height > 0) {
