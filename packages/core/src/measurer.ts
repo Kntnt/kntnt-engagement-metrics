@@ -289,6 +289,7 @@ export class Measurer {
 
       // Use the targetRatio computed at IO-callback time (snapshot-based)
       element.timer.targetRatio = element.computedTargetRatio
+      if (element.timer.isAtTarget) continue
       element.timer.advance(elapsed)
       return // only one element per tick
     }

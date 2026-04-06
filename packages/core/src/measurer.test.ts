@@ -693,6 +693,44 @@ describe('Measurer', () => {
       measurer.stop()
     })
 
+    it('skips element at target and advances next visible element', () => {
+      // Bug reproduction: element A is partially visible (at its target cap),
+      // element B is fully visible. The tick loop should skip A and advance B.
+      const longText = 'x'.repeat(1380) // 1380 chars = 60 seconds at default speed
+      setupDOM([longText, longText])
+      const measurer = new Measurer({ tickInterval: 200 })
+      measurer.start()
+
+      const paragraphs = document.querySelectorAll('p')
+
+      // Step 1: Only last 10% of element B visible at viewport top.
+      // triggerWithRect: rectTop, rectHeight, viewportHeight
+      // Element B at rectTop=-90, height=100, viewport=100 → visible interval [0.9, 1.0]
+      mockObserverInstance!.triggerWithRect(paragraphs[1]!, 0.1, true, -90, 100, 100)
+
+      // Wait for B to reach its target (~10%)
+      jest.advanceTimersByTime(10000)
+
+      const elements = measurer.getElements()
+      expect(elements[1]!.readingProgress).toBeCloseTo(0.1, 1)
+
+      // Step 2: Scroll back up. Only last 10% of A visible, B is fully visible.
+      mockObserverInstance!.triggerWithRect(paragraphs[0]!, 0.1, true, -90, 100, 100)
+      mockObserverInstance!.triggerWithRect(paragraphs[1]!, 1.0, true, 0, 100, 100)
+
+      // Wait for A to reach its target (~10%)
+      jest.advanceTimersByTime(10000)
+
+      expect(elements[0]!.readingProgress).toBeCloseTo(0.1, 1)
+
+      // Step 3: A is at target, B is fully visible — B should now advance
+      jest.advanceTimersByTime(10000)
+
+      expect(elements[1]!.readingProgress).toBeGreaterThan(0.2)
+
+      measurer.stop()
+    })
+
     it('caps reading at visibility ratio (target cap)', () => {
       const longText = 'x'.repeat(1380) // 1380 chars = 60 seconds at default speed
       setupDOM([longText])
