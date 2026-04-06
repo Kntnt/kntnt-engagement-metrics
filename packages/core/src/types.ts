@@ -15,7 +15,7 @@ export interface MeasurerConfig {
   /** Milliseconds between measurement ticks. Default: `200` */
   readonly tickInterval: number
 
-  /** IntersectionObserver threshold steps (array of ratios 0–1). Default: `[0, 0.25, 0.5, 0.75, 1.0]` */
+  /** IntersectionObserver threshold steps (array of ratios 0–1). Default: `[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]` */
   readonly observerThresholds: number[]
 
   /** Minimum scroll speed (px/sec) to count as active scrolling. Default: `200` */

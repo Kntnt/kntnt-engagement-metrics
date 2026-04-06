@@ -66,7 +66,7 @@ interface MeasurerConfig {
   exclude: string               // Default: '' (no exclusions)
   readingSpeed: number          // Default: 1380 (chars/min)
   tickInterval: number          // Default: 200 (ms)
-  observerThresholds: number[]  // Default: [0, 0.25, 0.5, 0.75, 1.0]
+  observerThresholds: number[]  // Default: [0, 0.1, 0.2, ..., 0.9, 1.0]
   scrollSpeedThreshold: number  // Default: 200 (px/sec)
   scrollCooldown: number        // Default: 50 (ms)
 }
@@ -123,6 +123,18 @@ interface TrackedElement {
 
   /** Reading progress (0–1), derived from the timer's progress. */
   readonly readingProgress: number
+
+  /** Cumulative fraction (0–1) of this element that has ever been visible. */
+  readonly seenRatio: number
+
+  /** The merged seen intervals, for diagnostic/overlay use. */
+  readonly seenIntervals: ReadonlyArray<readonly [number, number]>
+
+  /**
+   * Record a visible interval for this element.
+   * @internal Used by Measurer — add-ons and external code must not call this.
+   */
+  addSeenInterval(start: number, end: number): void
 
   /** Update visibility state from an IntersectionObserver entry. */
   updateVisibility(entry: IntersectionObserverEntry): void
