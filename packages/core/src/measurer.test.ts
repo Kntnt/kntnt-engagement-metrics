@@ -480,6 +480,67 @@ describe('Measurer', () => {
     })
   })
 
+  describe('setScrollCooldown()', () => {
+    it('accepts zero (disables cooldown)', () => {
+      setupDOM(['Hello world'])
+      const measurer = new Measurer({ scrollCooldown: 500 })
+      measurer.start()
+
+      expect(() => measurer.setScrollCooldown(0)).not.toThrow()
+      measurer.stop()
+    })
+
+    it('accepts a positive value', () => {
+      setupDOM(['Hello world'])
+      const measurer = new Measurer({ scrollCooldown: 500 })
+      measurer.start()
+
+      expect(() => measurer.setScrollCooldown(1000)).not.toThrow()
+      measurer.stop()
+    })
+
+    it('rejects negative values', () => {
+      setupDOM(['Hello world'])
+      const measurer = new Measurer({ scrollCooldown: 500 })
+      measurer.start()
+
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+      measurer.setScrollCooldown(-100)
+      expect(warnSpy).toHaveBeenCalled()
+      warnSpy.mockRestore()
+      measurer.stop()
+    })
+
+    it('rejects NaN', () => {
+      setupDOM(['Hello world'])
+      const measurer = new Measurer()
+      measurer.start()
+
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+      measurer.setScrollCooldown(Number.NaN)
+      expect(warnSpy).toHaveBeenCalled()
+      warnSpy.mockRestore()
+      measurer.stop()
+    })
+
+    it('rejects Infinity', () => {
+      setupDOM(['Hello world'])
+      const measurer = new Measurer()
+      measurer.start()
+
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+      measurer.setScrollCooldown(Number.POSITIVE_INFINITY)
+      expect(warnSpy).toHaveBeenCalled()
+      warnSpy.mockRestore()
+      measurer.stop()
+    })
+
+    it('does not throw when called before start', () => {
+      const measurer = new Measurer()
+      expect(() => measurer.setScrollCooldown(1000)).not.toThrow()
+    })
+  })
+
   describe('sequential reading', () => {
     it('only advances the topmost unfinished visible element', () => {
       setupDOM(['First paragraph', 'Second paragraph'])

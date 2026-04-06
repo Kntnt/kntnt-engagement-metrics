@@ -19,7 +19,7 @@ const DEFAULTS: MeasurerConfig = {
  * reading progress. Notifies registered listeners on each tick.
  */
 export class Measurer {
-  readonly #config: MeasurerConfig
+  #config: MeasurerConfig
   readonly #listeners: Set<MetricsListener> = new Set()
   #elements: TrackedElement[] = []
   #elementMap: Map<Element, TrackedElement> = new Map()
@@ -150,6 +150,19 @@ export class Measurer {
       const newDuration = element.charCount > 0 ? (element.charCount / charsPerMinute) * 60 : 0
       element.timer.recalibrate(newDuration)
     }
+  }
+
+  /**
+   * Change the scroll cooldown duration at runtime.
+   *
+   * @param ms - Cooldown in milliseconds. Must be a non-negative finite number.
+   */
+  setScrollCooldown(ms: number): void {
+    if (!Number.isFinite(ms) || ms < 0) {
+      console.warn('[kntnt-engagement-metrics] Invalid scroll cooldown:', ms)
+      return
+    }
+    this.#config = { ...this.#config, scrollCooldown: ms }
   }
 
   /** Query the DOM for matching content elements, filtering by config. Returns null on error. */
