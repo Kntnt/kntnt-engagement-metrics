@@ -153,6 +153,27 @@ interface TrackedElement {
 }
 ```
 
+### IntervalSet class
+
+```typescript
+class IntervalSet {
+  /** Add a visible interval. Values are clamped to [0, 1]. Degenerate, NaN, and Infinity inputs are silently ignored. */
+  add(start: number, end: number): void
+
+  /** Total covered fraction (0–1). */
+  readonly coverage: number
+
+  /** Number of disjoint intervals currently stored. */
+  readonly size: number
+
+  /** The merged intervals, for diagnostic/overlay use. */
+  readonly intervals: ReadonlyArray<readonly [number, number]>
+
+  /** Reset to empty. */
+  clear(): void
+}
+```
+
 ### Listener interface
 
 ```typescript

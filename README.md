@@ -63,7 +63,7 @@ If the visitor scrolls past a paragraph without pausing, the timer for that elem
 
 ### Pausing during scrolling and tab switches
 
-While the visitor is actively scrolling, reading timers do not advance. The library detects scrolling by measuring scroll speed; once the speed drops below a threshold and remains low for 500 ms, reading resumes. This distinguishes scanning (scrolling through content) from reading (pausing on content).
+While the visitor is actively scrolling, reading timers do not advance. The library detects scrolling by measuring scroll speed; once the speed drops below a threshold and remains low for 50 ms, reading resumes. This distinguishes scanning (scrolling through content) from reading (pausing on content).
 
 Timers also pause whenever the browser tab is hidden — if a visitor switches to another tab for five minutes, those five minutes are not counted as reading time.
 
@@ -145,7 +145,7 @@ All options are optional. The defaults work well for most sites.
 | `exclude` | `''` | CSS selector for elements to exclude |
 | `readingSpeed` | `1380` | Average reading speed in characters per minute |
 | `tickInterval` | `200` | Milliseconds between measurement ticks |
-| `observerThresholds` | `[0, 0.25, 0.5, 0.75, 1.0]` | Visibility ratios that trigger observer callbacks |
+| `observerThresholds` | `[0, 0.1, 0.2, …, 0.9, 1.0]` | Visibility ratios that trigger observer callbacks |
 | `scrollSpeedThreshold` | `200` | Minimum scroll speed (px/sec) to count as scrolling |
 | `scrollCooldown` | `50` | Milliseconds after last scroll before reading resumes |
 
@@ -173,7 +173,7 @@ How often (in milliseconds) the library runs its measurement loop. The default o
 
 ### Observer thresholds
 
-The visibility ratios at which the browser's `IntersectionObserver` reports changes. The default `[0, 0.25, 0.5, 0.75, 1.0]` means the library is notified when an element crosses 0%, 25%, 50%, 75%, or 100% visibility. More thresholds give finer-grained tracking but generate slightly more callbacks. This setting rarely needs changing.
+The visibility ratios at which the browser's `IntersectionObserver` reports changes. The default `[0, 0.1, 0.2, …, 0.9, 1.0]` means the library is notified at every 10% visibility step. More thresholds give finer-grained tracking but generate slightly more callbacks. This setting rarely needs changing.
 
 ### Scroll speed threshold
 

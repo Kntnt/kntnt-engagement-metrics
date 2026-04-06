@@ -53,9 +53,9 @@ The pipeline has two jobs. The second only runs if the first succeeds.
 #### Job 2: `e2e` (slower, ~60 seconds, depends on `check`)
 
 1. Install Bun + dependencies.
-2. `bun run build:core` — build the IIFE bundle.
+2. `bun run build:core` — build the core IIFE bundle (the `test:e2e` script also builds the overlay).
 3. Install Playwright with headless Chromium.
-4. `bun run test:e2e` — run integration tests against real browser.
+4. `bun run test:e2e` — build overlay IIFE, then run integration tests against real browser.
 
 ### Branch protection (manual setup on GitHub)
 

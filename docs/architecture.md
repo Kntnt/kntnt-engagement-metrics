@@ -58,21 +58,24 @@ Biome is a single tool that replaces both ESLint and Prettier with near-instant 
 
 ```
 packages/core/src/
-├── index.ts             → Public API (re-exports)
-├── iife.ts              → IIFE entry point (auto-starts measurement)
-├── measurer.ts          → Orchestrator: observes elements, manages timers, emits metrics
-├── measurer.test.ts     → Component tests (jsdom + mock IntersectionObserver)
-├── element.ts           → Tracks a single content element's visibility and reading state
-├── element.test.ts      → Unit tests
-├── timer.ts             → Countdown timer that advances proportionally to visibility
-├── timer.test.ts        → Unit tests
-└── types.ts             → Shared TypeScript interfaces and types
+├── index.ts                → Public API (re-exports)
+├── iife.ts                 → IIFE entry point (auto-starts measurement)
+├── measurer.ts             → Orchestrator: observes elements, manages timers, emits metrics
+├── measurer.test.ts        → Component tests (jsdom + mock IntersectionObserver)
+├── element.ts              → Tracks a single content element's visibility and reading state
+├── element.test.ts         → Unit tests
+├── interval-set.ts         → Mergeable interval set for tracking seen regions of an element
+├── interval-set.test.ts    → Unit tests
+├── timer.ts                → Countdown timer that advances proportionally to visibility
+├── timer.test.ts           → Unit tests
+└── types.ts                → Shared TypeScript interfaces and types
 ```
 
 ### Key classes
 
 - **`Measurer`** — the central orchestrator. Created with a configuration object. Discovers content elements in the DOM, creates `Element` instances, and runs a measurement tick loop that advances **only the topmost unfinished visible element** per tick (sequential, top-to-bottom reading model). Notifies registered listeners after each tick. Internally it stores tracked elements in a `Map<Element, TrackedElement>` for O(1) lookup when `IntersectionObserver` callbacks fire. Scanning depth is cached incrementally (updated when elements are first seen) rather than recomputed from the DOM on every tick. Listener notifications are error-isolated: each `listener.update()` call is wrapped in a try-catch so that a failing listener cannot break other listeners or the measurement loop.
-- **`Element`** — represents a single tracked DOM element (typically a `<p>` tag). Holds a `Timer` and tracks the element's visibility ratio within the viewport.
+- **`Element`** — represents a single tracked DOM element (typically a `<p>` tag). Holds a `Timer` and an `IntervalSet`, and tracks the element's visibility ratio within the viewport.
+- **`IntervalSet`** — accumulates `[start, end]` intervals in the range 0–1, merging overlapping or adjacent ones. Used by `Element` to track which fraction of a content element has ever been visible in the viewport.
 - **`Timer`** — a countdown that represents estimated reading time for one element. Each tick, the measurer sets the timer's `targetRatio` to the element's current visibility ratio before calling `advance()`, which caps progress at that ratio. This models "read only up to the visible boundary" semantics: a partially visible element cannot be counted as fully read until it is fully visible.
 
 ### Listener interface

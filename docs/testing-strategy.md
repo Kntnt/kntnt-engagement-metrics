@@ -31,6 +31,19 @@ Unit tests cover pure logic with no DOM dependency. They are the largest test su
 - Zero-duration timer: `isComplete` is true immediately, `progress` is 1.
 - Negative input to constructor is clamped to zero.
 
+### IntervalSet
+
+- Starts empty with zero coverage.
+- Tracks a single interval correctly.
+- Merges overlapping and adjacent intervals.
+- Keeps disjoint intervals separate.
+- Clamps values to [0, 1].
+- Ignores degenerate intervals (start >= end), NaN, and Infinity inputs.
+- Short-circuits `add()` when coverage is already 1.0.
+- `clear()` resets to empty.
+- Returns intervals sorted by start.
+- `intervals` getter returns a read-only snapshot (mutations do not affect internal state).
+
 ### TrackedElement
 
 - `charCount` reflects the text content length of the DOM node.
@@ -150,12 +163,12 @@ The test page (`test-page.html`) contains 15–20 paragraphs of realistic text (
 
 ### Build before test
 
-The e2e test script must build the IIFE first:
+The e2e test script must build the core and overlay IIFE bundles first:
 
 ```json
 {
   "scripts": {
-    "test:e2e": "bun run build:core && playwright test --config tests/e2e/playwright.config.ts"
+    "test:e2e": "bun run build:core && bun run build:overlay && bunx playwright test --config tests/e2e/playwright.config.ts"
   }
 }
 ```
@@ -283,6 +296,6 @@ expect(metrics.readingRatio).toBeLessThan(1.05)  // allow slight overshoot from 
 Both test levels should run in CI (e.g., GitHub Actions):
 
 1. `bun test` — runs unit + component tests.
-2. `bun run test:e2e` — builds the IIFE, then runs Playwright with `chromium` only (fastest).
+2. `bun run test:e2e` — builds the core and overlay IIFE bundles, then runs Playwright with `chromium` only (fastest).
 
-The e2e tests require `npx playwright install chromium` in the CI setup step.
+The e2e tests require `bunx playwright install chromium` in the CI setup step.
