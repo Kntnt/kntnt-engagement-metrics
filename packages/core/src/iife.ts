@@ -3,10 +3,9 @@
  * Exposes `window.KntntEngagementMetrics` global namespace.
  */
 
+import { version as VERSION } from '../package.json'
 import { Measurer } from './measurer.js'
 import type { MeasurerConfig } from './types.js'
-
-const VERSION = '0.1.0'
 
 function createMeasurer(config?: Partial<MeasurerConfig>): Measurer {
   return new Measurer(config)
