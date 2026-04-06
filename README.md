@@ -98,12 +98,12 @@ For the full algorithm specification, see [`docs/algorithm.md`](docs/algorithm.m
 
 The library consists of four packages. You need the core package plus at least one add-on to do something useful with the measurements.
 
-| Package | Description |
-|---------|-------------|
-| [`@kntnt/engagement-metrics`](packages/core) | Core measurement library (zero dependencies) |
-| [`@kntnt/engagement-metrics-matomo`](packages/matomo) | Matomo Analytics add-on |
-| [`@kntnt/engagement-metrics-gtag`](packages/gtag) | Google Analytics 4 (gtag.js) add-on |
-| [`@kntnt/engagement-metrics-overlay`](packages/overlay) | Real-time visual overlay showing measurement in action |
+| Package | npm | Description |
+|---------|-----|-------------|
+| [`@kntnt/engagement-metrics`](packages/core) | [![npm](https://img.shields.io/npm/v/@kntnt/engagement-metrics)](https://www.npmjs.com/package/@kntnt/engagement-metrics) | Core measurement library (zero dependencies) |
+| [`@kntnt/engagement-metrics-matomo`](packages/matomo) | [![npm](https://img.shields.io/npm/v/@kntnt/engagement-metrics-matomo)](https://www.npmjs.com/package/@kntnt/engagement-metrics-matomo) | Matomo Analytics add-on |
+| [`@kntnt/engagement-metrics-gtag`](packages/gtag) | [![npm](https://img.shields.io/npm/v/@kntnt/engagement-metrics-gtag)](https://www.npmjs.com/package/@kntnt/engagement-metrics-gtag) | Google Analytics 4 (gtag.js) add-on |
+| [`@kntnt/engagement-metrics-overlay`](packages/overlay) | [![npm](https://img.shields.io/npm/v/@kntnt/engagement-metrics-overlay)](https://www.npmjs.com/package/@kntnt/engagement-metrics-overlay) | Real-time visual overlay showing measurement in action |
 
 ### Core package
 
@@ -318,26 +318,22 @@ Three GA4 features can add value beyond basic event reporting:
 
 **BigQuery export.** If your GA4 property is linked to BigQuery, all event parameters land in the raw data automatically, free from the reporting interface's cardinality and sampling limits. You can run SQL queries against exact values, compute averages, and build custom visualisations without any additional configuration in the add-on.
 
-## Build and install
+## Installation
 
-The packages are not yet published to npm or a CDN. To use them, you build the JavaScript files yourself using [Bun](https://bun.sh/) — a fast JavaScript toolkit similar to Node.js.
-
-The library can be built in two formats:
-
-- **ESM** (ECMAScript Modules) — for projects that use a bundler like Vite, webpack, or Parcel. You install the packages as dependencies and import them in your code.
-- **IIFE** (Immediately Invoked Function Expression) — pre-built `.js` files that you load directly with `<script>` tags. No bundler needed.
-
-Use ESM if your site already has a JavaScript build step. Use IIFE if you just want to drop a few script files into your HTML.
-
-Both formats require [Bun](https://bun.sh/) to build. Bun is a fast, all-in-one JavaScript toolkit that handles package management, bundling, and running scripts. If you don't have it installed:
-
-```bash
-curl -fsSL https://bun.sh/install | bash
-```
+All packages are published on [npm](https://www.npmjs.com/) under the `@kntnt` scope. You need the core package plus at least one add-on.
 
 ### Using a bundler (ESM)
 
-If your project uses a bundler (Vite, webpack, Parcel, or similar), install the packages as dependencies and import them in your code:
+If your project uses a bundler (Vite, webpack, Parcel, or similar), install the packages as dependencies:
+
+```bash
+npm install @kntnt/engagement-metrics
+npm install @kntnt/engagement-metrics-gtag    # for Google Analytics 4
+npm install @kntnt/engagement-metrics-matomo   # for Matomo
+npm install @kntnt/engagement-metrics-overlay  # for the visual overlay
+```
+
+Then import and use them in your code:
 
 ```js
 import { createMeasurer } from '@kntnt/engagement-metrics'
@@ -357,26 +353,21 @@ measurer.start()
 
 ### Using script tags (IIFE)
 
-The packages are not yet published to npm or a CDN. To use them, you build the files yourself:
-
-1. Download and build the project:
-   ```bash
-   git clone https://github.com/Kntnt/kntnt-engagement-metrics.git
-   cd kntnt-engagement-metrics
-   bun install
-   bun run build
-   ```
-3. Copy the built files to your website. They are located at:
-   - `packages/core/dist/kntnt-engagement-metrics.min.js`
-   - `packages/matomo/dist/kntnt-engagement-metrics-matomo.min.js` (if using Matomo)
-   - `packages/gtag/dist/kntnt-engagement-metrics-gtag.min.js` (if using Google Analytics)
-   - `packages/overlay/dist/kntnt-engagement-metrics-overlay.min.js` (if using the visual overlay)
-
-4. Add the scripts to your HTML:
+Each package also ships a pre-built minified IIFE file for direct `<script>` tag inclusion. You can use [unpkg](https://unpkg.com/) or [jsDelivr](https://www.jsdelivr.com/) to load them from a CDN, or download and self-host:
 
 ```html
-<script src="/path/to/kntnt-engagement-metrics.min.js"></script>
-<script src="/path/to/kntnt-engagement-metrics-gtag.min.js"></script>
+<!-- From unpkg -->
+<script src="https://unpkg.com/@kntnt/engagement-metrics/dist/kntnt-engagement-metrics.min.js"></script>
+<script src="https://unpkg.com/@kntnt/engagement-metrics-gtag/dist/kntnt-engagement-metrics-gtag.min.js"></script>
+
+<!-- Or from jsDelivr -->
+<script src="https://cdn.jsdelivr.net/npm/@kntnt/engagement-metrics/dist/kntnt-engagement-metrics.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@kntnt/engagement-metrics-gtag/dist/kntnt-engagement-metrics-gtag.min.js"></script>
+```
+
+Then start measurement:
+
+```html
 <script>
   const measurer = KntntEngagementMetrics.start({
     selector: 'article p',
@@ -386,6 +377,20 @@ The packages are not yet published to npm or a CDN. To use them, you build the f
   KntntEngagementMetrics.gtag.register()
 </script>
 ```
+
+To self-host instead, build the project and copy the files from each package's `dist/` directory:
+
+```bash
+git clone https://github.com/Kntnt/kntnt-engagement-metrics.git
+cd kntnt-engagement-metrics
+bun install && bun run build
+```
+
+The built IIFE files are:
+- `packages/core/dist/kntnt-engagement-metrics.min.js`
+- `packages/matomo/dist/kntnt-engagement-metrics-matomo.min.js`
+- `packages/gtag/dist/kntnt-engagement-metrics-gtag.min.js`
+- `packages/overlay/dist/kntnt-engagement-metrics-overlay.min.js`
 
 ## Development
 

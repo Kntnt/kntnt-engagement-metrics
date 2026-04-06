@@ -1,9 +1,14 @@
 {
   "name": "@kntnt/engagement-metrics-matomo",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Matomo Analytics add-on for @kntnt/engagement-metrics.",
   "license": "MIT",
-  "author": "Kntnt Sweden AB <info@kntnt.se> (https://www.kntnt.se)",
+  "author": "Thomas Barregren",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kntnt/kntnt-engagement-metrics.git",
+    "directory": "packages/matomo"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -29,7 +34,7 @@
     "test": "bun test"
   },
   "peerDependencies": {
-    "@kntnt/engagement-metrics": ">=0.1.0"
+    "@kntnt/engagement-metrics": ">=1.0.0"
   },
   "keywords": [
     "engagement",

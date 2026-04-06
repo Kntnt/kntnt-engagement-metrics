@@ -1,7 +1,7 @@
 {
   "name": "kntnt-engagement-metrics",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Measure how deeply users engage with content — reading vs. scanning, time spent, and completion rate.",
   "license": "MIT",
   "author": "Kntnt Sweden AB <info@kntnt.se> (https://www.kntnt.se)",
