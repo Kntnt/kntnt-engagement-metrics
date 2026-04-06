@@ -89,9 +89,9 @@ const HUD_STYLES = `
   }
   input[type="range"] {
     flex: 1;
-    height: 4px;
     accent-color: gold;
     cursor: pointer;
+    margin: 4px 0;
   }
   input[type="number"] {
     width: 60px;
