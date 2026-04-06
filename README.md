@@ -55,7 +55,7 @@ import { registerGtag } from '@kntnt/engagement-metrics-gtag'
 
 const measurer = createMeasurer({
   selector: 'p',        // measure all <p> elements
-  readingSpeed: 863,     // characters per minute
+  readingSpeed: 882,     // characters per minute
 })
 
 registerGtag(measurer, {
@@ -94,7 +94,7 @@ The packages are not yet published to npm or a CDN. To use them, you build the f
 <script>
   const measurer = KntntEngagementMetrics.start({
     selector: 'article p',
-    readingSpeed: 863,
+    readingSpeed: 882,
   })
   KntntEngagementMetrics.measurer = measurer
   KntntEngagementMetrics.gtag.register()
@@ -168,7 +168,7 @@ For the full algorithm specification, see [`docs/algorithm.md`](docs/algorithm.m
 createMeasurer({
   selector: 'p',                               // CSS selector for content elements
   exclude: '',                                 // CSS selector for elements to exclude
-  readingSpeed: 863,                           // characters per minute
+  readingSpeed: 882,                           // characters per minute
   tickInterval: 200,                           // ms between measurement ticks
   observerThresholds: [0, 0.25, 0.5, 0.75, 1], // IntersectionObserver thresholds
   scrollSpeedThreshold: 50,                    // px/sec to count as scrolling
@@ -176,7 +176,7 @@ createMeasurer({
 })
 ```
 
-All options are optional. Defaults are shown above. For the complete API reference, see [`docs/api-contracts.md`](docs/api-contracts.md).
+All options are optional. Defaults are shown above. The mean reading speed across 14 of the 17 languages studied in the International Reading Speed Texts (IReST) project is 882 characters per minute. Reading speeds in the IReST project ranged from 65 to 71 milliseconds per character with a 95% confidence interval (Trauzettel-Klosinski S, Dietz K; IReST Study Group, "[Standardized Assessment of Reading Performance: The New International Reading Speed Texts IReST](https://doi.org/10.1167/iovs.11-8284)", *Invest Ophthalmol Vis Sci.* 2012;53(9):5452–5461). For the complete API reference, see [`docs/api-contracts.md`](docs/api-contracts.md).
 
 ## Building an add-on
 

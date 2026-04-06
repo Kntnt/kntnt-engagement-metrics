@@ -192,7 +192,7 @@ export class HudPanel {
     this.#speedSlider.min = '100'
     this.#speedSlider.max = '3000'
     this.#speedSlider.step = '50'
-    this.#speedSlider.value = '863'
+    this.#speedSlider.value = '882'
     speedRow.appendChild(this.#speedSlider)
 
     this.#speedInput = document.createElement('input')
@@ -200,7 +200,7 @@ export class HudPanel {
     this.#speedInput.min = '100'
     this.#speedInput.max = '3000'
     this.#speedInput.step = '50'
-    this.#speedInput.value = '863'
+    this.#speedInput.value = '882'
     speedRow.appendChild(this.#speedInput)
 
     const unit = document.createElement('span')

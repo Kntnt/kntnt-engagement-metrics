@@ -4,7 +4,7 @@ import type { EngagementMetrics, MeasurerConfig, MetricsListener } from './types
 const DEFAULTS: MeasurerConfig = {
   selector: 'p',
   exclude: '',
-  readingSpeed: 863,
+  readingSpeed: 882,
   tickInterval: 200,
   observerThresholds: [0, 0.25, 0.5, 0.75, 1.0],
   scrollSpeedThreshold: 50,

@@ -166,8 +166,8 @@ describe('Measurer', () => {
   })
 
   it('caps reading progress at visibility ratio', () => {
-    // 863 chars at 863 chars/min = 60s duration
-    const longText = 'x'.repeat(863)
+    // 882 chars at 882 chars/min = 60s duration
+    const longText = 'x'.repeat(882)
     setupDOM([longText])
     const measurer = new Measurer({ tickInterval: 200 })
     measurer.start()
@@ -283,9 +283,9 @@ describe('Measurer', () => {
   })
 
   it('readingRatio reaches 1.0 for fully read content', () => {
-    // 2 chars at 863 chars/min → duration ≈ 0.139s — one tick (0.2s) is enough
+    // 2 chars at 882 chars/min → duration ≈ 0.136s — one tick (0.2s) is enough
     setupDOM(['Hi'])
-    const measurer = new Measurer({ tickInterval: 200, readingSpeed: 863 })
+    const measurer = new Measurer({ tickInterval: 200, readingSpeed: 882 })
     measurer.start()
 
     const p = document.querySelector('p')!
@@ -408,11 +408,11 @@ describe('Measurer', () => {
   describe('setReadingSpeed()', () => {
     it('recalibrates all element timers', () => {
       setupDOM(['Hello world'])
-      const measurer = new Measurer({ readingSpeed: 863 })
+      const measurer = new Measurer({ readingSpeed: 882 })
       measurer.start()
 
       const contentTimeBefore = measurer.getMetrics().contentTime
-      measurer.setReadingSpeed(863 * 2) // double the speed
+      measurer.setReadingSpeed(882 * 2) // double the speed
       const contentTimeAfter = measurer.getMetrics().contentTime
 
       expect(contentTimeAfter).toBeCloseTo(contentTimeBefore / 2, 2)
@@ -518,7 +518,7 @@ describe('Measurer', () => {
     })
 
     it('caps reading at visibility ratio (target cap)', () => {
-      const longText = 'x'.repeat(863) // 863 chars = 60 seconds at default speed
+      const longText = 'x'.repeat(882) // 882 chars = 60 seconds at default speed
       setupDOM([longText])
       const measurer = new Measurer({ tickInterval: 200 })
       measurer.start()
@@ -535,7 +535,7 @@ describe('Measurer', () => {
     })
 
     it('raising visibility allows further reading', () => {
-      const longText = 'x'.repeat(863) // 60 seconds at default speed
+      const longText = 'x'.repeat(882) // 60 seconds at default speed
       setupDOM([longText])
       const measurer = new Measurer({ tickInterval: 200 })
       measurer.start()
@@ -573,7 +573,7 @@ describe('Measurer', () => {
     })
 
     it('resumes reading on scroll-back to partially-read element', () => {
-      const longText = 'x'.repeat(863) // 60 seconds at default speed
+      const longText = 'x'.repeat(882) // 60 seconds at default speed
       setupDOM([longText, 'Second'])
       const measurer = new Measurer({ tickInterval: 200 })
       measurer.start()
