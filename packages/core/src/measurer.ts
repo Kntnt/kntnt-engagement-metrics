@@ -165,6 +165,19 @@ export class Measurer {
     this.#config = { ...this.#config, scrollCooldown: ms }
   }
 
+  /**
+   * Change the scroll speed threshold at runtime.
+   *
+   * @param pxPerSec - Minimum scroll speed in pixels per second. Must be a positive finite number.
+   */
+  setScrollSpeedThreshold(pxPerSec: number): void {
+    if (!Number.isFinite(pxPerSec) || pxPerSec <= 0) {
+      console.warn('[kntnt-engagement-metrics] Invalid scroll speed threshold:', pxPerSec)
+      return
+    }
+    this.#config = { ...this.#config, scrollSpeedThreshold: pxPerSec }
+  }
+
   /** Query the DOM for matching content elements, filtering by config. Returns null on error. */
   #discoverNodes(): Element[] | null {
     let nodes: NodeListOf<Element>

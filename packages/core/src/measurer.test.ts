@@ -541,6 +541,70 @@ describe('Measurer', () => {
     })
   })
 
+  describe('setScrollSpeedThreshold()', () => {
+    it('accepts a positive value', () => {
+      setupDOM(['Hello world'])
+      const measurer = new Measurer()
+      measurer.start()
+
+      expect(() => measurer.setScrollSpeedThreshold(100)).not.toThrow()
+      measurer.stop()
+    })
+
+    it('rejects zero', () => {
+      setupDOM(['Hello world'])
+      const measurer = new Measurer()
+      measurer.start()
+
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+      measurer.setScrollSpeedThreshold(0)
+      expect(warnSpy).toHaveBeenCalled()
+      warnSpy.mockRestore()
+      measurer.stop()
+    })
+
+    it('rejects negative values', () => {
+      setupDOM(['Hello world'])
+      const measurer = new Measurer()
+      measurer.start()
+
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+      measurer.setScrollSpeedThreshold(-50)
+      expect(warnSpy).toHaveBeenCalled()
+      warnSpy.mockRestore()
+      measurer.stop()
+    })
+
+    it('rejects NaN', () => {
+      setupDOM(['Hello world'])
+      const measurer = new Measurer()
+      measurer.start()
+
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+      measurer.setScrollSpeedThreshold(Number.NaN)
+      expect(warnSpy).toHaveBeenCalled()
+      warnSpy.mockRestore()
+      measurer.stop()
+    })
+
+    it('rejects Infinity', () => {
+      setupDOM(['Hello world'])
+      const measurer = new Measurer()
+      measurer.start()
+
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+      measurer.setScrollSpeedThreshold(Number.POSITIVE_INFINITY)
+      expect(warnSpy).toHaveBeenCalled()
+      warnSpy.mockRestore()
+      measurer.stop()
+    })
+
+    it('does not throw when called before start', () => {
+      const measurer = new Measurer()
+      expect(() => measurer.setScrollSpeedThreshold(100)).not.toThrow()
+    })
+  })
+
   describe('sequential reading', () => {
     it('only advances the topmost unfinished visible element', () => {
       setupDOM(['First paragraph', 'Second paragraph'])
