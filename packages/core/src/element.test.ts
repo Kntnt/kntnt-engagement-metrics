@@ -99,4 +99,40 @@ describe('TrackedElement', () => {
     expect(el.charCount).toBe(0)
     expect(el.isFullyRead).toBe(true)
   })
+
+  it('seenRatio starts at 0', () => {
+    const el = new TrackedElement(mockElement('text'), READING_SPEED)
+    expect(el.seenRatio).toBe(0)
+  })
+
+  it('seenIntervals starts empty', () => {
+    const el = new TrackedElement(mockElement('text'), READING_SPEED)
+    expect(el.seenIntervals).toEqual([])
+  })
+
+  it('addSeenInterval accumulates intervals and updates seenRatio', () => {
+    const el = new TrackedElement(mockElement('text'), READING_SPEED)
+    el.addSeenInterval(0.0, 0.3)
+    expect(el.seenRatio).toBeCloseTo(0.3)
+    expect(el.seenIntervals).toEqual([[0.0, 0.3]])
+  })
+
+  it('addSeenInterval merges overlapping intervals', () => {
+    const el = new TrackedElement(mockElement('text'), READING_SPEED)
+    el.addSeenInterval(0.0, 0.4)
+    el.addSeenInterval(0.3, 0.7)
+    expect(el.seenRatio).toBeCloseTo(0.7)
+    expect(el.seenIntervals).toEqual([[0.0, 0.7]])
+  })
+
+  it('addSeenInterval tracks disjoint intervals', () => {
+    const el = new TrackedElement(mockElement('text'), READING_SPEED)
+    el.addSeenInterval(0.0, 0.3)
+    el.addSeenInterval(0.6, 1.0)
+    expect(el.seenRatio).toBeCloseTo(0.7)
+    expect(el.seenIntervals).toEqual([
+      [0.0, 0.3],
+      [0.6, 1.0],
+    ])
+  })
 })

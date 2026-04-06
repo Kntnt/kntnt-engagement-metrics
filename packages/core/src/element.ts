@@ -1,3 +1,4 @@
+import { IntervalSet } from './interval-set.js'
 import { Timer } from './timer.js'
 
 /**
@@ -10,6 +11,7 @@ export class TrackedElement {
 
   #visibilityRatio = 0
   #hasBeenSeen = false
+  #seenIntervals = new IntervalSet()
 
   /**
    * @param node - The DOM element to track.
@@ -40,6 +42,24 @@ export class TrackedElement {
   /** Reading progress for this element (0–1). */
   get readingProgress(): number {
     return this.timer.progress
+  }
+
+  /** Cumulative fraction (0–1) of this element that has ever been visible. */
+  get seenRatio(): number {
+    return this.#seenIntervals.coverage
+  }
+
+  /** The merged seen intervals, for diagnostic/overlay use. */
+  get seenIntervals(): ReadonlyArray<readonly [number, number]> {
+    return this.#seenIntervals.intervals
+  }
+
+  /**
+   * Record a visible interval for this element.
+   * @internal Used by Measurer — add-ons and external code must not call this.
+   */
+  addSeenInterval(start: number, end: number): void {
+    this.#seenIntervals.add(start, end)
   }
 
   /**
