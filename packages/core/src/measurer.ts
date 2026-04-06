@@ -219,19 +219,6 @@ export class Measurer {
       const wasSeen = element.hasBeenSeen
       element.updateVisibility(entry)
 
-      // Compute the visible fraction as a [start, end] interval in element-relative
-      // coordinates (0 = element top, 1 = element bottom). rect.top is relative to
-      // the viewport: negative means the element has scrolled above the viewport edge.
-      const rect = entry.boundingClientRect
-      const rootBounds = entry.rootBounds
-      if (rootBounds && rect.height > 0) {
-        const start = Math.max(0, Math.min(1, -rect.top / rect.height))
-        const end = Math.max(0, Math.min(1, (rootBounds.height - rect.top) / rect.height))
-        if (start < end) {
-          element.addSeenInterval(start, end)
-        }
-      }
-
       // Cache scanning depth when an element is first seen
       if (!wasSeen && element.hasBeenSeen && element.node.isConnected) {
         const rect = element.node.getBoundingClientRect()
@@ -300,8 +287,8 @@ export class Measurer {
       if (element.isFullyRead) continue
       if (element.visibilityRatio === 0) continue
 
-      // Cap reading at the visible boundary and advance at full speed
-      element.timer.targetRatio = element.seenRatio
+      // Use the targetRatio computed at IO-callback time (snapshot-based)
+      element.timer.targetRatio = element.computedTargetRatio
       element.timer.advance(elapsed)
       return // only one element per tick
     }
