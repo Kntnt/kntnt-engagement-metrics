@@ -22,12 +22,7 @@ export class IntervalSet {
     if (s >= e) return
 
     // Short-circuit when already fully covered
-    if (
-      this.#intervals.length === 1 &&
-      this.#intervals[0]?.[0] === 0 &&
-      this.#intervals[0]?.[1] === 1
-    )
-      return
+    if (this.coverage >= 1) return
 
     this.#intervals.push([s, e])
     this.#merge()

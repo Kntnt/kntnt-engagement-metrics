@@ -128,7 +128,9 @@ describe('IntervalSet', () => {
   it('intervals getter returns a read-only snapshot', () => {
     const set = new IntervalSet()
     set.add(0.0, 0.5)
-    const intervals = set.intervals
-    expect(intervals.length).toBe(1)
+    const snapshot = set.intervals
+    // Mutating the snapshot must not affect internal state
+    ;(snapshot as [number, number][])[0] = [0.9, 1.0]
+    expect(set.intervals).toEqual([[0.0, 0.5]])
   })
 })
