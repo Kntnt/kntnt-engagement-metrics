@@ -336,9 +336,7 @@
 
         <p>Scroll depth measures movement through a page. It does not measure attention to the content on that page. The two happen to correlate in some cases, but the correlation is weak enough to be unreliable for editorial decisions.</p>
 
-        <p>Some tools have tried to improve on scroll depth by combining it with time. The logic goes: if a visitor reaches 75&nbsp;% scroll depth and spends more than 60 seconds on the page, they are probably a reader. These heuristics get closer to the truth, but they are still guessing. A visitor who scrolls to 75&nbsp;% and then walks away from the computer for two minutes looks identical to a careful reader. There is no way to distinguish the two with scroll data and timestamps alone.</p>
-
-        <p>What would be needed is a way to observe which parts of the page the visitor actually pauses on &ndash; and for how long. In an ideal world, you would track the visitor&rsquo;s eye movements. In practice, that requires specialised hardware and explicit consent, which rules it out for general web analytics.</p>
+        <p>What would be needed is a way to observe which parts of the page the visitor actually pauses on &ndash; and for how long.</p>
       </section>
 
       <section>
@@ -348,13 +346,63 @@
 
         <p>The core idea rests on a reasonable assumption: if a paragraph is fully visible on screen and the visitor is not scrolling, there is a good chance they are reading it. The longer the paragraph remains visible and stationary, the higher the probability. This is not a certainty &ndash; someone might stare out of the window while a paragraph sits on screen &ndash; but it is the closest approximation available without eye-tracking hardware.</p>
 
-        <p>The library assigns each content element (by default, every <code>&lt;p&gt;</code> tag on the page) an estimated reading time based on its character count and a configurable reading speed (the default is 882 characters per minute, a figure derived from research on average reading speed). It then starts a countdown timer for each element. The timer advances only when two conditions are met: the element is visible in the viewport, and the visitor is not actively scrolling.</p>
+        <p>The library distinguishes between two behaviours. Reading means the visitor pauses on content long enough to plausibly consume it. Scanning means the visitor scrolls content into view but moves on without pausing. From these two behaviours it derives two continuous metrics, each on a scale from 0 to 1: a reading ratio and a scanning ratio. Together, they paint a far more detailed picture than page views, bounce rate or scroll depth alone.</p>
 
-        <p>Partial visibility counts proportionally. If half of a paragraph is visible, its timer advances at half speed. If the visitor scrolls, all timers pause immediately. They resume after a brief cooldown period &ndash; 500 milliseconds by default &ndash; once the scrolling stops. If the visitor switches to a different browser tab, all timers pause until the tab becomes visible again.</p>
+        <p>The following sections explain how each part of this process works &ndash; enough to understand the library without reading the source code.</p>
+      </section>
 
-        <p>From these per-element timers, the library computes two aggregate metrics on a continuous scale from 0 to 1. The reading ratio represents the fraction of the page&rsquo;s text content that has been &lsquo;read&rsquo; &ndash; that is, visible and stationary for long enough to plausibly have been consumed. The scanning ratio represents how far down the page the visitor has scrolled. Together, these two numbers paint a far more detailed picture than page views, bounce rate or scroll depth alone.</p>
+      <section>
+        <h2>Finding text to measure</h2>
+
+        <p>When the library starts, it searches the page for all HTML elements that match a CSS selector. The default is <code>p</code>, which targets every paragraph element, but the selector is configurable. A publisher measuring an article page might use <code>article :is(h1, h2, h3, p, ul, ol)</code> to include headings and lists within the article element.</p>
+
+        <p>If an exclusion selector has been configured, any element inside an excluded area &ndash; a sidebar, a footer, a table of contents &ndash; is filtered out. Elements that are hidden (zero height) or contain no text are also discarded. The remaining elements form the content that will be measured, in the order they appear on the page.</p>
+      </section>
+
+      <section>
+        <h2>A countdown timer for each element</h2>
+
+        <p>Each element gets its own countdown timer. The timer&rsquo;s duration is calculated from the element&rsquo;s character count and a configurable reading speed, expressed in characters per minute. The default is 882 characters per minute, a figure drawn from the International Reading Speed Texts (IReST) project, which measured reading speeds across 17 languages. A paragraph with 441 characters, for example, gets a 30-second timer. This represents the library&rsquo;s estimate of how long an average reader needs to read that particular element.</p>
+
+        <p>The reading speed can be changed at runtime. When it is, the library recalibrates every timer while preserving its current progress &ndash; there is no reset, no lost state. An element that was 60&nbsp;% read remains 60&nbsp;% read, but the remaining time adjusts to reflect the new speed.</p>
+      </section>
+
+      <section>
+        <h2>Watching what is on screen</h2>
+
+        <p>The library uses the browser&rsquo;s built-in <code>IntersectionObserver</code> API to monitor which elements are visible in the viewport and how much of each element is showing. The observer reports changes at five thresholds &ndash; 0&nbsp;%, 25&nbsp;%, 50&nbsp;%, 75&nbsp;% and 100&nbsp;% visibility &ndash; so the library always has a reasonably precise picture of how much of an element the visitor can see.</p>
+
+        <p>This approach is efficient. The browser itself handles the geometry calculations on its compositor thread, rather than the library polling element positions on every frame. The library simply receives a callback when a visibility boundary is crossed.</p>
+
+        <p>When an element appears in the viewport for the first time, the library also records how far down the page the visitor has reached. This is the scanning depth: the deepest point scrolled to so far. Scanning depth only increases &ndash; scrolling back up does not reduce it.</p>
+      </section>
+
+      <section>
+        <h2>The reading model</h2>
+
+        <p>Five times per second, the library runs a measurement tick. Each tick looks for the topmost element that is visible and has not yet been fully read, and advances that element&rsquo;s countdown timer. Only one element advances per tick. This models a human reader who finishes one paragraph before moving to the next.</p>
+
+        <p>There is one important constraint: reading progress cannot exceed the element&rsquo;s visible boundary. If only half of a paragraph is on screen, the timer advances until 50&nbsp;% of the estimated reading time has elapsed, then waits. Once the visitor scrolls to reveal more of the element, the timer continues. This prevents counting text as read when it is not yet visible.</p>
+
+        <p>If the visitor scrolls past a paragraph without pausing, the timer for that element never advances &ndash; or advances only partially. The library moves on to the next visible element. If the visitor later scrolls back up, reading resumes from where it left off. Progress is never lost.</p>
+      </section>
+
+      <section>
+        <h2>Pausing during scrolling and tab switches</h2>
+
+        <p>While the visitor is actively scrolling, reading timers do not advance. The library detects scrolling by measuring scroll speed; once the speed drops below a threshold and remains low for 500 milliseconds, reading resumes. This is the mechanism that distinguishes scanning from reading: a visitor who scrolls steadily through the page produces a high scanning ratio but a low reading ratio, while a visitor who pauses on each paragraph produces high values for both.</p>
+
+        <p>Timers also pause whenever the browser tab is hidden. If a visitor switches to another tab for five minutes, those five minutes are not counted as reading time. The Page Visibility API provides this signal, and the library&rsquo;s tick loop is automatically suspended by the browser when the tab is not visible.</p>
+      </section>
+
+      <section>
+        <h2>Computing the metrics</h2>
+
+        <p>After each tick, the library computes a snapshot of aggregate metrics from all tracked elements. Two of these metrics are the most immediately useful. The reading ratio is the fraction of the page&rsquo;s text content estimated to have been read &ndash; each element contributes its character count multiplied by its timer&rsquo;s progress, and the sum is divided by the total character count across all elements. The scanning ratio is how far down the page the visitor has scrolled, relative to the total scrollable height.</p>
 
         <p>A reading ratio of 0.02 and a scanning ratio of 0.95 means the visitor scrolled through nearly the entire page without pausing. A reading ratio of 0.85 and a scanning ratio of 0.90 means they read most of the content carefully. A reading ratio of 0.45 and a scanning ratio of 0.50 means they read the first half and left. Each of these patterns is invisible to traditional analytics but clearly distinguishable with engagement metrics.</p>
+
+        <p>The snapshot also includes the raw values behind those ratios: reading time (estimated seconds of actual reading so far), content time (the total time it would take to read everything), reading length and content length (characters read versus total characters) and scanning depth and content depth (pixels scrolled versus total scrollable pixels). These are available to any code that registers as a listener.</p>
       </section>
 
       <section>
@@ -364,7 +412,7 @@
 
         <p>Kntnt Engagement Metrics handles this through a listener interface. The core library emits a metrics snapshot on every measurement tick &ndash; roughly five times per second. Any piece of code that implements a simple <code>update</code> method can subscribe to these snapshots and do whatever it wants with the data.</p>
 
-        <p>The project ships with two ready-made listeners as separate packages: one for Matomo and one for Google Analytics 4 (GA4). Both follow the same pattern. They define a set of thresholds &ndash; for example, reading progress at 10&nbsp;%, 25&nbsp;%, 50&nbsp;%, 75&nbsp;% and 100&nbsp;% &ndash; and fire an analytics event the first time each threshold is crossed. This prevents the analytics platform from being flooded with events on every tick while still capturing the progression of the visitor&rsquo;s engagement.</p>
+        <p>The project ships with two ready-made listeners as separate packages: one for Matomo and one for Google Analytics 4. Both follow the same pattern. They define a set of thresholds and fire an analytics event the first time each threshold is crossed. The Matomo add-on fires reading events at 10&nbsp;%, 20&nbsp;%, 30&nbsp;% and so on up to 100&nbsp;%, plus scanning events at 25&nbsp;%, 50&nbsp;%, 75&nbsp;% and 100&nbsp;%. The GA4 add-on fires reading events at 10&nbsp;%, 25&nbsp;%, 50&nbsp;%, 75&nbsp;%, 90&nbsp;% and 100&nbsp;%, with the same scanning thresholds. Each threshold fires exactly once per page visit, so a fully engaged reader generates a handful of events rather than a continuous stream.</p>
 
         <p>The Matomo add-on pushes events via Matomo&rsquo;s <code>_paq</code> array and can optionally set custom dimension values for reading ratio, scanning ratio and reading time. The GA4 add-on calls <code>gtag()</code> with custom event names. Both auto-detect whether their respective analytics tracker is present on the page and log a warning to the browser console if it is not &ndash; without throwing errors or breaking anything.</p>
 
@@ -372,15 +420,21 @@
       </section>
 
       <section>
+        <h2>When the measuring stops</h2>
+
+        <p>Once every element has been fully read and the visitor has scrolled to the bottom of the page, both the reading ratio and scanning ratio reach 1. The library then stops its measurement loop and releases its observers and event listeners, leaving zero overhead on the page. There is nothing left to measure.</p>
+      </section>
+
+      <section>
         <h2>The overlay: seeing engagement in real time</h2>
 
         <p>The page you are reading right now does not use Matomo or Google Analytics. Instead, it uses a third add-on called the overlay, which visualises the measurement process directly in the browser.</p>
 
-        <p>The overlay serves two purposes. It is a demonstration tool &ndash; a way to see the library in action and verify that its assumptions about reading behaviour are reasonable. And it is a testing tool &ndash; useful during development for calibrating the reading speed parameter and checking that the measurement algorithm behaves as expected on different page layouts.</p>
+        <p>The overlay serves two purposes. It is a demonstration tool &ndash; a way to see the library in action and verify that its assumptions about reading behaviour are reasonable. And it is a diagnostic tool &ndash; useful during development for calibrating the reading speed parameter and checking that the measurement algorithm behaves as expected on different page layouts.</p>
 
-        <p>When the overlay is active, each tracked paragraph on the page gets a coloured outline. Blue means the element has not yet been scrolled into view. Gold, with a gradient showing progress, means the element is currently visible and its reading timer is advancing. Red means the element was previously visible but has scrolled out of view before being fully &lsquo;read&rsquo;. Green means the timer has completed &ndash; the element has been visible and stationary for long enough to count as read.</p>
+        <p>When the overlay is active, each tracked paragraph on the page gets a coloured outline. Blue means the element has not yet been scrolled into view. Gold, with a gradient showing progress, means the element is currently visible and its reading timer is advancing. Red means the element was previously visible but has scrolled out of view before being fully read. Green means the timer has completed &ndash; the element has been visible and stationary for long enough to count as read.</p>
 
-        <p>In one corner of the screen, a small panel displays live metrics: reading percentage, scanning percentage, the number of elements in each state, and an interactive reading speed control. The speed control is a slider and number input that adjusts the assumed reading speed in real time. Move it up, and the timers require less time per element; move it down, and they require more. Because the timers preserve their current progress when recalibrated, the effect is immediate and smooth &ndash; there is no reset.</p>
+        <p>In one corner of the screen, a small panel displays live metrics: reading percentage, scanning percentage, the number of elements in each state and an interactive reading speed control. The speed control is a slider (100&ndash;3,000 characters per minute) and numeric input that adjusts the assumed reading speed in real time. Move it up, and the timers require less time per element; move it down, and they require more. Because the timers preserve their current progress when recalibrated, the effect is immediate and smooth.</p>
 
         <p>The overlay panel uses Shadow DOM, which means its styles are completely isolated from the rest of the page. It cannot be affected by the page&rsquo;s CSS, and it cannot affect the page&rsquo;s layout. Pressing <code>Ctrl+Shift+D</code> (configurable) toggles the overlay on and off.</p>
 
@@ -392,7 +446,7 @@
 
         <p>Web performance is a constant concern for publishers. Every additional script competes for bandwidth and processing time, and visitors on slow connections or older devices feel the impact most.</p>
 
-        <p>The core library is 4.7 KB minified &ndash; small enough to load in a single TCP round trip on most connections. The overlay add-on, which includes all its CSS and HTML generation code, adds 6.8 KB. The Matomo and GA4 add-ons are 1.2 KB and 1.4 KB respectively. A typical production deployment &ndash; the core plus one analytics add-on &ndash; weighs under 6 KB. For comparison, a single medium-resolution JPEG image on most web pages is ten to fifty times that size.</p>
+        <p>The core library is 5.0 KB minified &ndash; small enough to load in a single TCP round trip on most connections. The overlay add-on, which includes all its CSS and HTML generation code, adds 6.9 KB. The Matomo and GA4 add-ons are 1.2 KB and 1.4 KB respectively. A typical production deployment &ndash; the core plus one analytics add-on &ndash; weighs under 6.5 KB. For comparison, a single medium-resolution JPEG image on most web pages is ten to fifty times that size.</p>
 
         <p>This small footprint is a direct consequence of a strict design rule: the core library has zero runtime dependencies. No utility libraries, no framework code, no polyfills. Every byte in the bundle is code that the library itself needs.</p>
       </section>
@@ -402,7 +456,7 @@
 
         <p>Size is only one dimension of performance. A small script that monopolises the browser&rsquo;s main thread can still degrade the user experience. Kntnt Engagement Metrics is designed to avoid this.</p>
 
-        <p>The measurement loop runs on <code>requestAnimationFrame</code>, throttled to one tick every 200 milliseconds. Each tick does the minimum possible work: a single pass through the tracked elements, advancing timers with basic arithmetic. No DOM reads happen during the tick. The browser&rsquo;s own compositor thread handles visibility detection through the <code>IntersectionObserver</code> API, which is vastly more efficient than polling element positions with <code>getBoundingClientRect()</code> on every frame.</p>
+        <p>The measurement loop runs on <code>requestAnimationFrame</code>, throttled to one tick every 200 milliseconds. Each tick does the minimum possible work: it finds the one element that needs advancing, and updates a single timer with basic arithmetic. No DOM reads happen during the tick. The browser&rsquo;s own compositor thread handles visibility detection through the <code>IntersectionObserver</code> API, which is vastly more efficient than polling element positions with <code>getBoundingClientRect()</code> on every frame.</p>
 
         <p>All scroll and touch event listeners are registered with the <code>{ passive: true }</code> flag. This tells the browser that the listener will not call <code>preventDefault()</code>, allowing the browser to handle scrolling on a separate thread without waiting for JavaScript to respond. The practical effect is that the library cannot introduce scroll jank &ndash; the stuttering, laggy scrolling that some poorly written tracking scripts cause.</p>
 
@@ -428,7 +482,7 @@
 
         <p>The library runs entirely in the visitor&rsquo;s browser. It does not send data to any server on its own &ndash; that is the job of whichever analytics add-on is configured, using the analytics platform&rsquo;s own established channels. The core library makes no network requests of any kind.</p>
 
-        <p>It does not read cookies, access <code>localStorage</code>, collect personal information, or fingerprint the browser. It observes two things: which content elements are visible in the viewport, and whether the page is being scrolled. These are the same observations that any <code>IntersectionObserver</code>-based lazy-loading image script makes.</p>
+        <p>It does not read cookies, access <code>localStorage</code>, collect personal information or fingerprint the browser. It observes two things: which content elements are visible in the viewport, and whether the page is being scrolled. These are the same observations that any <code>IntersectionObserver</code>-based lazy-loading image script makes.</p>
 
         <p>The source code is published under the MIT licence by Kntnt Sweden AB. MIT is one of the most permissive open-source licences: anyone can use, modify and redistribute the code, including in commercial products, with no obligation beyond preserving the copyright notice. The full source &ndash; TypeScript, tests, build configuration, documentation &ndash; is available for inspection on GitHub.</p>
       </section>
