@@ -22,6 +22,9 @@ function mockEntry(
 const READING_SPEED = 1380 // chars per minute (default)
 
 describe('TrackedElement', () => {
+  // Shared node with 1380 chars → 60s reading time at default speed
+  const node = mockElement('x'.repeat(1380))
+
   it('charCount reflects the text content length', () => {
     const node = mockElement('Hello, world!')
     const el = new TrackedElement(node, READING_SPEED)
@@ -134,5 +137,145 @@ describe('TrackedElement', () => {
       [0.0, 0.3],
       [0.6, 1.0],
     ])
+  })
+
+  it('visibleStart, visibleEnd, and computedTargetRatio default to 0', () => {
+    const el = new TrackedElement(node, READING_SPEED)
+    expect(el.visibleStart).toBe(0)
+    expect(el.visibleEnd).toBe(0)
+    expect(el.computedTargetRatio).toBe(0)
+  })
+
+  it('updateVisibility stores current visible interval from entry geometry', () => {
+    const el = new TrackedElement(node, READING_SPEED)
+    // Element: top=0, height=1000. Viewport: height=300.
+    // visible interval: [0, 0.3]
+    el.updateVisibility({
+      intersectionRatio: 0.3,
+      isIntersecting: true,
+      boundingClientRect: { top: 0, height: 1000 } as DOMRectReadOnly,
+      rootBounds: { height: 300 } as DOMRectReadOnly,
+    } as IntersectionObserverEntry)
+    expect(el.visibleStart).toBeCloseTo(0, 5)
+    expect(el.visibleEnd).toBeCloseTo(0.3, 5)
+  })
+
+  it('updateVisibility computes interval when element is partially above viewport', () => {
+    const el = new TrackedElement(node, READING_SPEED)
+    // Element: top=-600, height=1000. Viewport: height=400.
+    // start = max(0, 600/1000) = 0.6, end = min(1, (400+600)/1000) = 1.0
+    el.updateVisibility({
+      intersectionRatio: 0.4,
+      isIntersecting: true,
+      boundingClientRect: { top: -600, height: 1000 } as DOMRectReadOnly,
+      rootBounds: { height: 400 } as DOMRectReadOnly,
+    } as IntersectionObserverEntry)
+    expect(el.visibleStart).toBeCloseTo(0.6, 5)
+    expect(el.visibleEnd).toBeCloseTo(1.0, 5)
+  })
+
+  it('updateVisibility resets visible interval when element leaves viewport', () => {
+    const el = new TrackedElement(node, READING_SPEED)
+    el.updateVisibility({
+      intersectionRatio: 1.0,
+      isIntersecting: true,
+      boundingClientRect: { top: 0, height: 100 } as DOMRectReadOnly,
+      rootBounds: { height: 100 } as DOMRectReadOnly,
+    } as IntersectionObserverEntry)
+    expect(el.visibleEnd).toBeCloseTo(1.0, 5)
+
+    // Element scrolls out of view
+    el.updateVisibility({
+      intersectionRatio: 0,
+      isIntersecting: false,
+      boundingClientRect: { top: -200, height: 100 } as DOMRectReadOnly,
+      rootBounds: { height: 800 } as DOMRectReadOnly,
+    } as IntersectionObserverEntry)
+    expect(el.visibleStart).toBe(0)
+    expect(el.visibleEnd).toBe(0)
+  })
+
+  it('updateVisibility handles null rootBounds gracefully', () => {
+    const el = new TrackedElement(node, READING_SPEED)
+    el.updateVisibility({
+      intersectionRatio: 0.5,
+      isIntersecting: true,
+      boundingClientRect: { top: 0, height: 100 } as DOMRectReadOnly,
+      rootBounds: null,
+    } as IntersectionObserverEntry)
+    expect(el.visibleStart).toBe(0)
+    expect(el.visibleEnd).toBe(0)
+  })
+
+  it('updateVisibility handles zero-height element gracefully', () => {
+    const el = new TrackedElement(node, READING_SPEED)
+    el.updateVisibility({
+      intersectionRatio: 1.0,
+      isIntersecting: true,
+      boundingClientRect: { top: 0, height: 0 } as DOMRectReadOnly,
+      rootBounds: { height: 800 } as DOMRectReadOnly,
+    } as IntersectionObserverEntry)
+    expect(el.visibleStart).toBe(0)
+    expect(el.visibleEnd).toBe(0)
+  })
+
+  it('computedTargetRatio snapshots progress at time of IO callback', () => {
+    const el = new TrackedElement(node, READING_SPEED)
+    // Element fully visible, progress = 0 → targetRatio = 0 + max(0, 1.0 - max(0, 0)) = 1.0
+    el.updateVisibility({
+      intersectionRatio: 1.0,
+      isIntersecting: true,
+      boundingClientRect: { top: 0, height: 100 } as DOMRectReadOnly,
+      rootBounds: { height: 100 } as DOMRectReadOnly,
+    } as IntersectionObserverEntry)
+    expect(el.computedTargetRatio).toBeCloseTo(1.0, 5)
+  })
+
+  it('computedTargetRatio accounts for current timer progress', () => {
+    const el = new TrackedElement(node, READING_SPEED)
+    // Simulate some reading: advance timer to 50% progress
+    el.timer.targetRatio = 1.0
+    el.timer.advance(30) // 30s of 60s total → 50% progress
+
+    // Now only bottom 20% visible: [0.8, 1.0], progress = 0.5
+    // targetRatio = 0.5 + max(0, 1.0 - max(0.8, 0.5)) = 0.5 + 0.2 = 0.7
+    el.updateVisibility({
+      intersectionRatio: 0.2,
+      isIntersecting: true,
+      boundingClientRect: { top: -800, height: 1000 } as DOMRectReadOnly,
+      rootBounds: { height: 200 } as DOMRectReadOnly,
+    } as IntersectionObserverEntry)
+    expect(el.computedTargetRatio).toBeCloseTo(0.7, 5)
+  })
+
+  it('computedTargetRatio does not exceed 1', () => {
+    const el = new TrackedElement(node, READING_SPEED)
+    el.timer.targetRatio = 1.0
+    el.timer.advance(50) // ~83% progress
+
+    // Fully visible: progress=0.83, visible=[0,1], target=0.83+max(0,1-max(0,0.83))=0.83+0.17=1.0
+    el.updateVisibility({
+      intersectionRatio: 1.0,
+      isIntersecting: true,
+      boundingClientRect: { top: 0, height: 100 } as DOMRectReadOnly,
+      rootBounds: { height: 100 } as DOMRectReadOnly,
+    } as IntersectionObserverEntry)
+    expect(el.computedTargetRatio).toBeLessThanOrEqual(1.0)
+  })
+
+  it('computedTargetRatio holds at progress when only already-read content is visible', () => {
+    const el = new TrackedElement(node, READING_SPEED)
+    el.timer.targetRatio = 1.0
+    el.timer.advance(30) // 50% progress
+
+    // Only top 30% visible — all already read: progress=0.5, visible=[0,0.3]
+    // targetRatio = 0.5 + max(0, 0.3 - max(0, 0.5)) = 0.5 + 0 = 0.5
+    el.updateVisibility({
+      intersectionRatio: 0.3,
+      isIntersecting: true,
+      boundingClientRect: { top: 0, height: 1000 } as DOMRectReadOnly,
+      rootBounds: { height: 300 } as DOMRectReadOnly,
+    } as IntersectionObserverEntry)
+    expect(el.computedTargetRatio).toBeCloseTo(0.5, 5)
   })
 })

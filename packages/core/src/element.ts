@@ -12,6 +12,9 @@ export class TrackedElement {
   #visibilityRatio = 0
   #hasBeenSeen = false
   #seenIntervals = new IntervalSet()
+  #visibleStart = 0
+  #visibleEnd = 0
+  #computedTargetRatio = 0
 
   /**
    * @param node - The DOM element to track.
@@ -54,6 +57,25 @@ export class TrackedElement {
     return this.#seenIntervals.intervals
   }
 
+  /** Start of the currently visible interval (0 = element top, 1 = element bottom). */
+  get visibleStart(): number {
+    return this.#visibleStart
+  }
+
+  /** End of the currently visible interval (0 = element top, 1 = element bottom). */
+  get visibleEnd(): number {
+    return this.#visibleEnd
+  }
+
+  /**
+   * Precomputed targetRatio based on the visible interval at the time of the last
+   * IO callback. Snapshots timer progress so the ceiling doesn't slide as the
+   * timer advances between callbacks.
+   */
+  get computedTargetRatio(): number {
+    return this.#computedTargetRatio
+  }
+
   /**
    * Record a visible interval for this element.
    * @internal Used by Measurer — add-ons and external code must not call this.
@@ -64,11 +86,36 @@ export class TrackedElement {
 
   /**
    * Update visibility state from an IntersectionObserver entry.
+   * Computes the visible interval, accumulates it into seen intervals, and
+   * snapshots the targetRatio based on current timer progress.
    */
   updateVisibility(entry: IntersectionObserverEntry): void {
     this.#visibilityRatio = entry.intersectionRatio
     if (entry.isIntersecting && !this.#hasBeenSeen) {
       this.#hasBeenSeen = true
     }
+
+    // Compute the visible fraction as [start, end] in element-relative coordinates.
+    const rect = entry.boundingClientRect
+    const rootBounds = entry.rootBounds
+    if (rootBounds && rect.height > 0) {
+      const start = Math.max(0, Math.min(1, -rect.top / rect.height))
+      const end = Math.max(0, Math.min(1, (rootBounds.height - rect.top) / rect.height))
+      if (start < end) {
+        this.#visibleStart = start
+        this.#visibleEnd = end
+        this.#seenIntervals.add(start, end)
+
+        // Snapshot progress and compute target once per IO callback
+        const progress = this.timer.progress
+        const newReadable = Math.max(0, end - Math.max(start, progress))
+        this.#computedTargetRatio = Math.min(1, progress + newReadable)
+        return
+      }
+    }
+
+    // Not visible or degenerate geometry — reset interval
+    this.#visibleStart = 0
+    this.#visibleEnd = 0
   }
 }
